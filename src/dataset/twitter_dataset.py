@@ -8,31 +8,37 @@ import torch.nn as nn
 import torch.utils.data as data
 import torch.optim as optim
 
-def multi_center_gaussian(N, *sample_shape, centers: list=None, energy: list=None):
-    # Returns a tensor of N samples drawn from a specified mixture of gaussians
-        if centers is None:
-            centers = [np.zeros(sample_shape)] # one center by default
-            # assert energy is None # energy cannot be not None if centers is None
-        if energy is None:
-            energy = np.ones((len(centers))) # equi-energy by default
-        assert len(energy) == len(centers) , "centers and energy must have the same length"
-        centers = np.array(centers, dtype=float) # convert centers into a nparr
-        assert all(center.shape == sample_shape for center in centers) , "center in centers must have the same shape as sample_shape"
+"""
+TODO:
+1. Create Train/val/test datasets
+2. Complete process()
+"""
 
-        energy = torch.tensor(energy, dtype=torch.float)
-        z = torch.multinomial(energy, N, replacement=True) # Bug: z = torch.multinomial(energy, N, replacement=True)--replacement is clear to false by default, thus whenever we want to sample a lot samples from a few values, we need to explictily set replacement
-        displacements = torch.tensor(centers, dtype=torch.float)[z] # N x sample_shape
-        samples = torch.randn(N, *sample_shape, dtype=torch.float) + displacements
-        return samples
+class Twitters (data.Dataset):
+    def __init__(self, data_path,  batch_size, device= "cpu", **kwargs):
+        self.data_path = data_path
+        self.batch_size = batch_size
+        self.device = device
+        self.kwargs = kwargs
 
-class Mixture_of_two_2DGaussians (data.Dataset):
-    def __init__(self, N: int =1000, center_1: tuple =(5,5), center_2: tuple =(-5,-5)):
-        self.data = multi_center_gaussian(N, 2, centers=[center_1, center_2])
-        self.data = self.data.numpy()
-        self.data = np.float32(self.data)
+        self.data = []
+        self.process(self.data_path)      
+    
+    def process(data_path):
         
+        # TODO: 
+        # read train/val/teset files with CVS reader and convert them into self.data
+        # OR find some existing code
+        return
+
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         return self.data[idx]
+
+
+# print(os.path.join(os.path, "src"))
+# data_path = {1: "cooking", 2: "sun", 3:"clown_face"}
+# for key in data_path:
+#     data_path[key] = "data/processed_data" + data_path[key] + ".cvs"
