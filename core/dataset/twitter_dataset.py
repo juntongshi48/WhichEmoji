@@ -15,7 +15,7 @@ TODO:
 """
 
 class Twitters (data.Dataset):
-    def __init__(self, data_path,  batch_size, device= "cpu", **kwargs):
+    def __init__(self, data_path,  batch_size, device="cpu", **kwargs):
         self.data_path = data_path
         self.batch_size = batch_size
         self.device = device
@@ -27,8 +27,7 @@ class Twitters (data.Dataset):
     def process(data_path):
         
         # TODO: 
-        # read train/val/teset files with CVS reader and convert them into self.data
-        # OR find some existing code
+        # Tokenize Raw data
         return
 
     def __len__(self):
@@ -39,6 +38,6 @@ class Twitters (data.Dataset):
 
 
 # print(os.path.join(os.path, "src"))
-# data_path = {1: "cooking", 2: "sun", 3:"clown_face"}
-# for key in data_path:
-#     data_path[key] = "data/processed_data" + data_path[key] + ".cvs"
+data_path = {1: "cooking", 2: "sun", 3:"clown_face"}
+for key in data_path:
+    data_path[key] = "data/processed_data" + data_path[key] + ".cvs"
