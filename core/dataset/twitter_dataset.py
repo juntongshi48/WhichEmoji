@@ -65,6 +65,6 @@ class twitter_dataset (data.Dataset):
 
 
 # print(os.path.join(os.path, "src"))
-train_path = "core/dataset/data/processed/train.csv"
+train_path = "data/processed/train.csv"
 tokenizer = word_based()
 train_set = twitter_dataset(train_path, tokenizer)

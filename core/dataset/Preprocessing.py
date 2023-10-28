@@ -80,13 +80,13 @@ class preprocessing:
                     writer.writerow(data)
 
     def process_all_csvs_in_directory(self):
-        output_dir = "core/dataset/data/processed/"
+        output_dir = "data/processed/"
         # Ensure output directory exists
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
         for label, raw_path in self.raw_paths.items():
-            raw_path = "core/dataset/data/raw/" + raw_path + ".csv"
+            raw_path = "data/raw/" + raw_path + ".csv"
             self.process_and_save_to_csv(raw_path, output_dir, label)
     
 
