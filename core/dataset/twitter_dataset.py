@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.utils.data as data
 import torch.optim as optim
 
-from tokenizer import word_based
+from utils import xypair
 
 import pdb
 
@@ -19,52 +19,41 @@ TODO:
 2. Complete process()
 """
 
-
 class twitter_dataset (data.Dataset):
-    def __init__(self, data_path, tokenizer, batch_size=128, device="cpu", **kwargs):
+    def __init__(self, data_path, tokenizer, device="cpu", **kwargs):
         self.data_path = data_path
-        self.batch_size = batch_size
         self.tokenizer = tokenizer
         self.device = device
         self.kwargs = kwargs
 
-        
-
-        self.data = []
+        # self.data = None
+        self.encoded_sentences = None
+        self.labels = None
         self.process()      
     
     def process(self):
         df = pd.read_csv(self.data_path,  sep=",")
-
-        labels = df.iloc[:,0].to_numpy(dtype=np.int32)
+        self.labels = df.iloc[:,0].to_numpy(dtype=np.int32)
         sentences = df.iloc[:,1].to_numpy(dtype=str)
+        self.encoded_sentences, self.eos = self.tokenizer.process(sentences)
 
-        encoded_sentences = tokenizer.process(sentences)
-        pdb.set_trace()
+        # self.data = zip(encoded_sentences, labels)
 
-
-        # sentences = [sentence.split('\t') for sentence in sentences]
-        # filtered_sentence = []
-        # for sentence in sentences:
-        #     if len(sentence) >= self.min_sentence_len:
-        #         filtered_sentence.append(sentence)
-
-        # tokenizer.tokenize(filtered_sentence)
-        # print(df[:10])
-        # pdb.set_trace()
-
-        # TODO: 
-        # Tokenize Raw data
-        return
+        # xytuple = zip(encoded_sentences, labels)
+        # tuple2pair = lambda xytuple: xypair(*xytuple)
+        # self.data = list(map(tuple2pair, xytuple))
 
     def __len__(self):
-        return len(self.data)
+        return len(self.encoded_sentences)
 
     def __getitem__(self, idx):
-        return self.data[idx]
+        x = torch.tensor(self.encoded_sentences[idx], dtype=torch.long)
+        eos = torch.tensor (self.eos[idx], dtype=torch.long)
+        y = torch.tensor(self.labels[idx], dtype=torch.long)
+        return x, eos, y
 
 
-# print(os.path.join(os.path, "src"))
-train_path = "core/dataset/data/processed/train.csv"
-tokenizer = word_based()
-train_set = twitter_dataset(train_path, tokenizer)
+# # print(os.path.join(os.path, "src"))
+# train_path = "core/dataset/data/processed/train.csv"
+# tokenizer = word_based()
+# train_set = twitter_dataset(train_path, tokenizer)
