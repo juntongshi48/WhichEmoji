@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.utils.data as data
 import torch.optim as optim
+import torch.nn.functional as F
 
 import pdb
 
@@ -17,7 +18,7 @@ class RNNLM(nn.Module):
         self.vocab_size = params['vocab_size']
         self.d_emb = params['d_emb']
         self.d_hid = params['d_hid']
-        self.n_layer = 1
+        self.n_layer = params['n_layer']
         self.batch_size = params['batch_size']
         self.device = params['device']
         self.num_class = params['num_class']
@@ -25,6 +26,9 @@ class RNNLM(nn.Module):
         self.encoder = nn.Embedding(self.vocab_size, self.d_emb)
         self.rnn = nn.RNN(self.d_emb, self.d_hid, self.n_layer, batch_first=True)
         self.decoder = nn.Linear(self.d_hid, self.num_class)
+        self.loss_func = nn.CrossEntropyLoss()
+
+        self.epoch = 0
 
     def forward(self, x, eos):
         """
@@ -36,11 +40,14 @@ class RNNLM(nn.Module):
         hidden = (torch.zeros(self.n_layer, batch_size, self.d_hid).to(self.device))  # initial hidden state set to zeros
         ## Pass words through the embedding layer
         x = self.encoder(x) # (N, L, H_in)
-        # x = x.transpose(-2, -1) # (N, H_in, L)
         ## Pass x, h0 into the RNN
-        out, z_L = self.rnn(x, hidden) 
-        z = out[:, eos, :] # (N, H_out)
+        out, z_L = self.rnn(x, hidden) # out: (N,L,H_out)
+        eos = F.one_hot(eos, num_classes=seq_len) # (N,L)
+        eos = eos.to(torch.float32) # BUG: matmul doesn't support int
+        z = torch.matmul(out.transpose(-1,-2), eos.unsqueeze(-1)) # (N, H_out) BUG: under torch matmul/bmm, I need to unsqueeze the column vector eos
+        z = z.squeeze(-1)
         logit = self.decoder(z) # (N, K)
+
         return logit
     
     def loss(self, x, eos, y):
@@ -51,32 +58,34 @@ class RNNLM(nn.Module):
             y = (N,)
         """
         n = x.shape[0]
-        y_pred = self.forward(x, eos) # (N,K)
-        loss = nn.CrossEntropyLoss(y_pred, y)
-        avg_loss = loss / n
-        return avg_loss
+        logit = self.forward(x, eos) # (N,K)
+        loss = self.loss_func(logit, y) # BUG: nn.CrossEntropyLoss() by default takes the mean (recall the argument reduction='mean')
+        # For DEBUG -- compare logits with true labels
+        # if self.epoch == 1:
+        #     torch.set_printoptions(threshold=10_000)
+        #     print(torch.cat((logit,y.unsqueeze(-1)), dim=-1)[:10])
+        #     print(f'loss: {loss}')
+        #     pdb.set_trace()
+        return loss
+
+    def predict(self, x, eos):
+        logit = self.forward(x, eos) # (N,K)
+        with torch.no_grad():
+            y_pred = torch.argmax(logit, dim=-1)
+            return y_pred.cpu().numpy()
 
 
-
-class ATTNLM(nn.Module):
+class ATTNLM(RNNLM):
     def __init__(self, params):
-        super(ATTNLM, self).__init__()
-
-        self.vocab_size = params['vocab_size']
-        self.d_emb = params['d_emb']
-        self.d_hid = params['d_hid']
-        self.n_layer = 1
-        self.btz = params['batch_size']
-
-        self.encoder = nn.Embedding(self.vocab_size, self.d_emb)
+        super().__init__(params)
         self.attn = Attention(self.d_hid)
         self.rnn = nn.RNN(self.d_emb, self.d_hid, self.n_layer, batch_first=True)
         # the combined_W maps to map combined hidden states and context vectors to d_hid
         self.combined_W = nn.Linear(self.d_hid * 2, self.d_hid)
-        self.decoder = nn.Linear(self.d_hid, self.vocab_size)
+        self.decoder = nn.Linear(self.d_hid, self.num_class)
 
 
-    def forward(self, batch, return_attn_weights=False):
+    def forward(self, x, eos, return_attn_weights=False):
 
         """
             IMPLEMENT HERE
@@ -89,18 +98,22 @@ class ATTNLM(nn.Module):
                matrix, return the attention weight matrix of dimension [N, L, L]
                which was received from the forward function of attnetion module
         """
-        batch_size, seq_len= batch.shape
-        hidden = torch.zeros(self.n_layer, batch_size, self.d_hid).to(device)
+        batch_size, seq_len= x.shape
+        hidden = (torch.zeros(self.n_layer, batch_size, self.d_hid).to(self.device))  # initial hidden state set to zeros
         ## Pass words through the embedding layer
-        x = self.encoder(batch) # (N, L, H_in)
-        # x = x.transpose(-2, -1) # (N, H_in, L)
+        x = self.encoder(x) # (N, L, H_in)
         ## Pass x, h0 into the RNN
-        rnn_out = self.rnn(x, hidden) 
-        z = rnn_out[0] # (N, L, H_out)
+        out, z_L = self.rnn(x, hidden) # out: (N,L,H_out)
+        eos = F.one_hot(eos, num_classes=seq_len) # (N,L)
+        eos = eos.to(torch.float32) # BUG: matmul doesn't support int
+        z = torch.matmul(out.transpose(-1,-2), eos.unsqueeze(-1)) # (N, H_out) BUG: under torch matmul/bmm, I need to unsqueeze the column vector eos
+        z = z.squeeze(-1)
 
-        att_vec, att_scores = self.attn(z)
-        decoder_input = self.combined_W(torch.cat((att_vec, z), dim=-1))
-        logit = self.decoder(decoder_input) # (N, L, V)
+        att_vec, att_scores = self.attn(out)
+        att_z = torch.matmul(att_vec.transpose(-1,-2), eos.unsqueeze(-1)) # (N, H_out) BUG: under torch matmul/bmm, I need to unsqueeze the column vector eos
+        att_z = att_z.squeeze(-1)
+        decoder_input = self.combined_W(torch.cat((att_z, z), dim=-1))
+        logit = self.decoder(decoder_input) # (N, K)
         
         if return_attn_weights:
             return att_scores

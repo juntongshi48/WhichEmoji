@@ -14,9 +14,10 @@ from sklearn.model_selection import train_test_split
 import pdb
 
 class preprocessing:
-    def __init__(self, raw_paths, test_size: int=0.2, min_sentence_len: int=2) -> None:
-        self.raw_paths = raw_paths
+    def __init__(self, id2label, test_size: int=0.2, val_size: int=0.125, min_sentence_len: int=2) -> None:
+        self.id2label = id2label
         self.test_size = test_size
+        self.val_size = val_size
         self.min_sentence_len = min_sentence_len
 
 
@@ -64,14 +65,16 @@ class preprocessing:
 
         # Split into Train, Test, (Val)
         emoji_label = [label] * len(processed_tweets) # BUG: writerow() only accepts list as input, so we need to wrap the interger with list
-        output = train_test_split(processed_tweets, emoji_label, test_size=self.test_size) # TODO: Pass random_state to control the random seed that determines the state
-        output = [zip(output[2], output[0]), zip(output[3], output[1])]
+        x_train, x_test, y_train, y_test = train_test_split(processed_tweets, emoji_label, test_size=self.test_size) # TODO: Pass random_state to control the random seed that determines the state
+        x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=self.val_size) 
+        output = [zip(y_train, x_train), zip(y_val, x_val), zip(y_test, x_test)]
         
         # Save to CSV
         output_paths = []
-        output_filenames = ["train", "test"]
+        output_filenames = ["train", "val", "test"]
         for output_filename in output_filenames:
             output_paths.append(output_dir + output_filename + ".csv")
+        
         for output_data, output_path in zip(output, output_paths):
             with open(output_path, 'a', newline='') as out_file:
                 writer = csv.writer(out_file)
@@ -85,7 +88,7 @@ class preprocessing:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        for label, raw_path in self.raw_paths.items():
+        for label, raw_path in self.id2label.items():
             raw_path = "core/dataset/data/raw/" + raw_path + ".csv"
             self.process_and_save_to_csv(raw_path, output_dir, label)
     
@@ -101,7 +104,25 @@ class preprocessing:
         #     process_and_save_to_csv(csv_file, output_filename, emoji_unicode_list[i])
         #     i = i + 1
         
-print("hi")
-raw_paths = {0: "cooking", 1: "sun", 2:"clown_face"}
-preprop = preprocessing(raw_paths)
+# id2label = {0: "cooking", 
+#              1: "sun", 
+#              2:"clown_face", 
+#              3: "ghost", 
+#              4: "skull", 
+#              5: "folded_hands", 
+#              6: "red_heart", 
+#              7: "fire", 
+#              8: "hot_face", 
+#              9: "sparkles"}
+id2label = {0: "enraged_face", 
+             1: "face_holding_back_tears", 
+             2:"face_savoring_food", 
+             3: "face_with_tears_of_joy", 
+             4: "fearful_face", 
+             5: "hot_face", 
+             6: "sun", 
+             7: "loudly_crying_face", 
+             8: "smiling_face_with_sunglasses", 
+             9: "thinking_face"}
+preprop = preprocessing(id2label)
 preprop.process_all_csvs_in_directory()

@@ -1,3 +1,5 @@
 core/dataset/data/*
 **/__pycache__/
-*.
+.*
+CM*.png
+training_plot.png

@@ -9,7 +9,6 @@ import torch.nn as nn
 import torch.utils.data as data
 import torch.optim as optim
 
-from utils import xypair
 
 import pdb
 
