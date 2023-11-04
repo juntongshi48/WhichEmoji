@@ -23,13 +23,14 @@ class word_based():
         }
         self.id2vocab = None
 
-    def process(self, sentences):
+    def process(self, sentences, train):
         """ 
         Input: list of sentences separated by '\t'
         Output: list of tokenized and encoded sentences
         """
         tokenized_sentences = self.tokenize(sentences)
-        self.get_vocab_id(tokenized_sentences)
+        if train: # vocab dictionary is computed only for the training set
+            self.get_vocab_id(tokenized_sentences)
         encoded_sentences = self.encode(tokenized_sentences)
         return encoded_sentences
 
@@ -75,7 +76,7 @@ class word_based():
         for v in vocab2count:
             if vocab2count[v] < 3:  # anything occuring less than 3 times will be replaced by <UNK>
                 continue
-            elif v not in self.vocab2id:  # <s> and </s> already in vocab2id
+            elif v not in self.vocab2id:
                 self.vocab2id[v] = next_v_id
                 next_v_id += 1
         self.id2vocab = {v: k for k, v in self.vocab2id.items()}

@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 
 import pdb
 
-from tokenizer import word_based
-from twitter_dataset import twitter_dataset
-from RNN import RNNLM, ATTNLM
+from core.dataset.tokenizer import word_based
+from core.dataset.twitter_dataset import twitter_dataset
+from core.model.RNN import RNNLM, ATTNLM
 
 
 def plot_training_plot(train_losses, val_losses, title, fname):
@@ -35,7 +35,7 @@ def plot_training_plot(train_losses, val_losses, title, fname):
     plt.tight_layout()
     plt.savefig(fname)
 
-def plot_confusion_matrix(labels, confusion_matrix, title, fname):
+def plot_confusion_matrix(labels, confusion_matrix, title, fname):    
     fig, ax = plt.subplots()
     im = ax.imshow(confusion_matrix)
 
@@ -65,15 +65,15 @@ def plot_confusion_matrix(labels, confusion_matrix, title, fname):
 
 
 
-def train(model, train_loader, optimizer, epoch, grad_clip=None, rectify=False):
+def train(model, train_loader, optimizer, epoch, device, grad_clip=None, rectify=False):
     model.train()
     losses = []
     targets = np.zeros(0)
     predictions = np.zeros(0)
     for x, eos, y in train_loader:
-        x = x.cuda()
-        eos = eos.cuda()
-        y = y.cuda()
+        x = x.to(device)
+        eos = eos.to(device)
+        y = y.to(device)
         loss = model.loss(x, eos, y)
         
         optimizer.zero_grad()
@@ -105,7 +105,7 @@ def train(model, train_loader, optimizer, epoch, grad_clip=None, rectify=False):
     return losses
 
 
-def eval(model, data_loader):
+def eval(model, data_loader, device):
     model.eval()
     total_loss = 0
     num_batch = 0
@@ -113,9 +113,9 @@ def eval(model, data_loader):
     # targets = np.zeros(0)
     with torch.no_grad():
         for x, eos, y in data_loader:
-            x = x.cuda()
-            eos = eos.cuda()
-            y = y.cuda()
+            x = x.to(device)
+            eos = eos.to(device)
+            y = y.to(device)
             loss = model.loss(x, eos, y).cpu().item()
             total_loss += loss
             num_batch += 1
@@ -157,13 +157,14 @@ def train_epochs(model, train_loader, val_loader, test_loader, train_args):
     epochs, lr = train_args['epochs'], train_args['lr']
     grad_clip = train_args.get('grad_clip', None)
     optimizer = optim.Adam(model.parameters(), lr=lr)
+    device = train_args['device']
 
     train_losses, val_losses, val_accuracies, test_metrics_ = [], [], [], []
     for epoch in tqdm(range(epochs)):
         model.epoch = epoch
-        train_loss = train(model, train_loader, optimizer, epoch, grad_clip)
-        val_metrics = eval(model, val_loader)
-        test_metrics = eval(model, test_loader)
+        train_loss = train(model, train_loader, optimizer, epoch, device, grad_clip)
+        val_metrics = eval(model, val_loader, device)
+        test_metrics = eval(model, test_loader, device)
 
         train_losses.extend(train_loss)
         val_losses.append(val_metrics['loss'])
@@ -186,13 +187,14 @@ def main():
              8: "smiling_face_with_sunglasses", 
              9: "thinking_face"}
     train_args = {}
+
     train_args['d_emb'] = 512
-    train_args['d_hid'] = 128
-    train_args['n_layer'] = 5
+    train_args['d_hid'] = 64
+    train_args['n_layer'] = 1
     train_args['batch_size'] = 256
-    train_args['epochs'] = 80
-    train_args['lr'] = 5e-5
-    train_args['device'] = 'cuda:0'
+    train_args['epochs'] = 20
+    train_args['lr'] = 5e-4
+    train_args['device'] = 'cuda:1'
     train_args['attention'] = True
 
     # train_args['d_emb'] = 512
@@ -201,7 +203,7 @@ def main():
     # train_args['batch_size'] = 128
     # train_args['epochs'] = 2
     # train_args['lr'] = 5e-4
-    # train_args['device'] = 'cuda:0'
+    # train_args['device'] = 'cuda:1'
 
     train_args['num_class'] = len(id2label) # TODO: connect this to preprocessing
 
@@ -210,15 +212,24 @@ def main():
     test_path = "core/dataset/data/processed/test.csv"
     tokenizer = word_based()
 
-    train_dataset = twitter_dataset(train_path, tokenizer)
+    train_dataset = twitter_dataset(train_path, tokenizer, train=True)
     val_dataset = twitter_dataset(val_path, tokenizer)
     test_dataset = twitter_dataset(test_path, tokenizer)
-    vocab_size = len(tokenizer.id2vocab)
+    vocab_size = len(tokenizer.vocab2id)
     train_args['vocab_size'] = vocab_size
 
     train_loader = data.DataLoader(train_dataset, batch_size=train_args['batch_size'], shuffle=True)
     val_loader = data.DataLoader(val_dataset, batch_size=train_args['batch_size'], shuffle=False)
     test_loader = data.DataLoader(test_dataset, batch_size=train_args['batch_size'], shuffle=False)
+
+    loaders = [train_loader, val_loader, test_loader]
+
+    for loader in loaders:
+        labels = loader.dataset.labels
+        u, counts = np.unique(labels, return_counts=True)
+        print(u)
+        print(counts)
+        print()
 
     ## Select a model
     if train_args['attention']:
@@ -247,7 +258,7 @@ def main():
     # Draw Confusion Matrix
     att = "att" if train_args["attention"] else "noatt"
     # /core/results/confusion_matrix/
-    filename = f'CM_{train_args["d_emb"]}_{train_args["d_hid"]}_{train_args["n_layer"]}_{train_args["batch_size"]}_{att}.png'
+    filename = f'confusion_matrix/CM_{train_args["d_emb"]}_{train_args["d_hid"]}_{train_args["n_layer"]}_{train_args["batch_size"]}_{att}.png'
     plot_confusion_matrix(id2label.values(), test_metrics_best['confusion_matrix'], 'Confusion_Matrix', filename)
 
 
