@@ -138,31 +138,8 @@ def train_epochs(model, train_loader, val_loader, test_loader, cfg):
 def main(cfg):
     id = list(range(len(cfg.data.labels)))
     id2label = dict(zip(id, cfg.data.labels))
-    # id2label = {0: "enraged_face", 
-    #          1: "face_holding_back_tears", 
-    #          2:"face_savoring_food", 
-    #          3: "face_with_tears_of_joy", 
-    #          4: "fearful_face", 
-    #          5: "hot_face", 
-    #          6: "sun", 
-    #          7: "loudly_crying_face", 
-    #          8: "smiling_face_with_sunglasses", 
-    #          9: "thinking_face"}
-    
-    train_args = {}
-    # train_args['d_emb'] = 512
-    # train_args['d_hid'] = 64
-    # train_args['n_layer'] = 1
-    # train_args['batch_size'] = 128
-    # train_args['epochs'] = 2
-    # train_args['lr'] = 5e-4
-    # train_args['device'] = 'cuda:1'
 
-    # train_args['num_class'] = len(id2label) # TODO: connect this to preprocessing
-    # cfg.__dict__["num_class"] = len(id)
-    # cfg.num_class = len(id)
-    
-
+    ## dataset and tokenizer
     train_path = os.path.join(cfg.data.data_dir, "train.csv")
     val_path = os.path.join(cfg.data.data_dir, "val.csv")
     test_path = os.path.join(cfg.data.data_dir, "test.csv")
@@ -176,6 +153,7 @@ def main(cfg):
     val_dataset = twitter_dataset(val_path, tokenizer)
     test_dataset = twitter_dataset(test_path, tokenizer)
 
+    ## dataloader
     train_loader = data.DataLoader(train_dataset, batch_size=cfg.batch_size, shuffle=True)
     val_loader = data.DataLoader(val_dataset, batch_size=cfg.batch_size, shuffle=False)
     test_loader = data.DataLoader(test_dataset, batch_size=cfg.batch_size, shuffle=False)
@@ -189,18 +167,16 @@ def main(cfg):
         print(u)
         print(counts)
         print()
-    ##
+    ## -------------------------------------
 
+    ## Select a model
     num_class = len(id)
     vocab_size = len(tokenizer.vocab2id)
     vocab_size = vocab_size
-
-    ## Select a model
     if cfg.model.attention:
         model = ATTNLM(cfg, num_class, vocab_size).to(cfg.device)
     else:
         model = RNNLM(cfg, num_class, vocab_size).to(cfg.device)
-
 
     ## Training
     train_losses, val_losses, val_accuracies, test_metrics = train_epochs(model, train_loader, val_loader, test_loader, cfg=cfg)
@@ -220,9 +196,15 @@ def main(cfg):
     print(f'Test Macro F1: {test_metrics_best["f1_macro"]}')
 
     # Draw Confusion Matrix
-    att = "att" if train_args["attention"] else "noatt"
+    att = "att" if cfg.attention else "noatt"
     # /core/results/confusion_matrix/
-    filename = f'confusion_matrix/CM_{train_args["d_emb"]}_{train_args["d_hid"]}_{train_args["n_layer"]}_{train_args["batch_size"]}_{att}.png'
+    filename = f'''confusion_matrix/CM
+    _demb{cfg.d_embedding}
+    _dhid{cfg.d_hidden}
+    _nlay{cfg.n_layer}
+    _bs{cfg.batch_size}
+    _{att}
+    .png'''
     plot_confusion_matrix(id2label.values(), test_metrics_best['confusion_matrix'], 'Confusion_Matrix', filename)
 
 
