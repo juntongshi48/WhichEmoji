@@ -13,3 +13,14 @@ model:
 data:
   data_dir: "core/dataset/data/processed/"
   tokenizer: "word_based"        # "word_based", "bpe"
+  labels:
+    - enraged_face 
+    - face_holding_back_tears
+    - face_savoring_food"
+    - face_with_tears_of_joy, 
+    - fearful_face, 
+    - hot_face, 
+    - sun, 
+    - loudly_crying_face, 
+    - smiling_face_with_sunglasses, 
+    - thinking_face
