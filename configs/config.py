@@ -59,7 +59,6 @@ def parse_config(
 ):
     loader = yaml.FullLoader
     if path:
-        pdb.set_trace()
         with open(path) as conf_data:
             return yaml.load(conf_data, Loader=loader)
     elif data:

@@ -6,7 +6,7 @@ train_rnn:
 	$(eval BATCH_SIZE := 256)
 	$(eval EPOCHS := 20)
 	$(eval LR := 0.0005)
-	${eval CONFIG_FILE := configs/train_rnn.yaml}
+	${eval CONFIG_FILE := configs/rnn.yaml}
 	-git add .; git commit -m "commit to run"
 	${eval REVISION := ${shell git rev-parse --short HEAD}}
 	CUDA_VISIBLE_DEVICES=${GPU_ID} python core/main.py --config_file ${CONFIG_FILE} \
