@@ -18,6 +18,7 @@ import pdb
 
 sys.path.append(os.getcwd())
 
+from configs.config import Config
 from core.dataset.tokenizer import word_based
 from core.dataset.twitter_dataset import twitter_dataset
 from core.model.RNN import RNNLM, ATTNLM
@@ -228,6 +229,6 @@ if __name__ == '__main__':
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--lr", type=float, default=0.0004)
     _args = parser.parse_args()
-    print(_args)
-    pdb.set_trace()
+    cfg = Config(**_args.__dict__)
+
     main()
