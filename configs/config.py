@@ -52,6 +52,33 @@ class Config:
             k: v.todict() if isinstance(v, Struct) else v
             for k, v in self.__dict__.items()
         }
+    
+    def __str__(self):
+        def prepare_dict4print(dict_):
+            tmp_dict = copy.deepcopy(dict_)
+
+            def recursive_change_list_to_string(d, summarize=16):
+                for k, v in d.items():
+                    if isinstance(v, dict):
+                        recursive_change_list_to_string(v)
+                    elif isinstance(v, list):
+                        d[k] = (
+                            (
+                                str(
+                                    v[: summarize // 2] + ["..."] + v[-summarize // 2 :]
+                                )
+                                + f" (len={len(v)})"
+                            )
+                            if len(v) > summarize
+                            else str(v) + f" (len={len(v)})"
+                        )
+                    else:
+                        pass
+
+            recursive_change_list_to_string(tmp_dict)
+            return tmp_dict
+
+        return json.dumps(prepare_dict4print(self.todict()), indent=4, sort_keys=False)
 
 def parse_config_file(
     path=None,
