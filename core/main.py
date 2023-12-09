@@ -136,7 +136,7 @@ def train_epochs(model, train_loader, val_loader, test_loader, train_args):
 
 def main(cfg):
     
-    id = list(range(cfg.data.labels))
+    id = list(range(len(cfg.data.labels)))
     id2label = dict(zip(id, cfg.data.labels))
     # id2label = {0: "enraged_face", 
     #          1: "face_holding_back_tears", 
@@ -159,7 +159,8 @@ def main(cfg):
     # train_args['device'] = 'cuda:1'
 
     # train_args['num_class'] = len(id2label) # TODO: connect this to preprocessing
-    cfg.__dict__["num_class"] = len(id)
+    # cfg.__dict__["num_class"] = len(id)
+    cfg.num_class = len(id)
     pdb.set_trace()
 
     train_path = "core/dataset/data/processed/train.csv"
@@ -227,5 +228,4 @@ if __name__ == '__main__':
     _args = parser.parse_args()
     cfg = Config(**_args.__dict__)
     print(f"The config of this experiment is : \n {cfg}")
-    pdb.set_trace()
     main(cfg)
