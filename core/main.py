@@ -134,7 +134,7 @@ def train_epochs(model, train_loader, val_loader, test_loader, train_args):
         
     return train_losses, val_losses, val_accuracies, test_metrics_
 
-def main():
+def main(cfg):
     
     id = list(range(cfg.data.labels))
     id2label = dict(zip(id, cfg.data.labels))
