@@ -162,9 +162,9 @@ def main(cfg):
     # cfg.num_class = len(id)
     
 
-    train_path = os.path.join(cfg.data_dir, "train.csv")
-    val_path = os.path.join(cfg.data_dir, "val.csv")
-    test_path = os.path.join(cfg.data_dir, "test.csv")
+    train_path = os.path.join(cfg.data.data_dir, "train.csv")
+    val_path = os.path.join(cfg.data.data_dir, "val.csv")
+    test_path = os.path.join(cfg.data.data_dir, "test.csv")
 
     if cfg.data.tokenizer == "word_based":
         tokenizer = word_based()
