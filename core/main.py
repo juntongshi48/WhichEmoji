@@ -135,7 +135,7 @@ def train_epochs(model, train_loader, val_loader, test_loader, train_args):
     return train_losses, val_losses, val_accuracies, test_metrics_
 
 def main(cfg):
-    
+    pdb.set_trace()
     id = list(range(len(cfg.data.labels)))
     id2label = dict(zip(id, cfg.data.labels))
     # id2label = {0: "enraged_face", 
@@ -159,25 +159,28 @@ def main(cfg):
     # train_args['device'] = 'cuda:1'
 
     # train_args['num_class'] = len(id2label) # TODO: connect this to preprocessing
-    cfg.__dict__["num_class"] = len(id)
+    # cfg.__dict__["num_class"] = len(id)
     # cfg.num_class = len(id)
-    pdb.set_trace()
+    
 
-    train_path = "core/dataset/data/processed/train.csv"
-    val_path = "core/dataset/data/processed/val.csv"
-    test_path = "core/dataset/data/processed/test.csv"
-    tokenizer = word_based()
+    train_path = os.path.join(cfg.data_dir, "train.csv")
+    val_path = os.path.join(cfg.data_dir, "val.csv")
+    test_path = os.path.join(cfg.data_dir, "test.csv")
+
+    if cfg.data.tokenizer == "word_based":
+        tokenizer = word_based()
+    else:
+        raise NotImplementedError(f"Unknown tokenizer {cfg.data.tokenizer}")
 
     train_dataset = twitter_dataset(train_path, tokenizer, train=True)
     val_dataset = twitter_dataset(val_path, tokenizer)
     test_dataset = twitter_dataset(test_path, tokenizer)
-    vocab_size = len(tokenizer.vocab2id)
-    train_args['vocab_size'] = vocab_size
 
     train_loader = data.DataLoader(train_dataset, batch_size=train_args['batch_size'], shuffle=True)
     val_loader = data.DataLoader(val_dataset, batch_size=train_args['batch_size'], shuffle=False)
     test_loader = data.DataLoader(test_dataset, batch_size=train_args['batch_size'], shuffle=False)
-
+    
+    ## Print data split stats
     loaders = [train_loader, val_loader, test_loader]
 
     for loader in loaders:
@@ -186,12 +189,17 @@ def main(cfg):
         print(u)
         print(counts)
         print()
+    ##
+
+    num_class = len(id)
+    vocab_size = len(tokenizer.vocab2id)
+    vocab_size = vocab_size
 
     ## Select a model
     if train_args['attention']:
-        model = ATTNLM(train_args).to(train_args['device'])
+        model = ATTNLM(cfg, num_class, vocab_size).to(train_args['device'])
     else:
-        model = RNNLM(train_args).to(train_args['device'])
+        model = RNNLM(cfg, num_class, vocab_size).to(train_args['device'])
 
 
     ## Training
