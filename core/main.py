@@ -159,7 +159,7 @@ def main(cfg):
     # train_args['device'] = 'cuda:1'
 
     # train_args['num_class'] = len(id2label) # TODO: connect this to preprocessing
-    cfg.num_class = len(id)
+    cfg.__dict__["num_class"] = len(id)
     pdb.set_trace()
 
     train_path = "core/dataset/data/processed/train.csv"
