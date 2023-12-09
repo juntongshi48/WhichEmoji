@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 import pdb
 
-pdb.set_trace()
+sys.path.append(os.getcwd())
 
 from core.dataset.tokenizer import word_based
 from core.dataset.twitter_dataset import twitter_dataset
