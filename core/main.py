@@ -112,9 +112,10 @@ def evaluate_accuracy(model, data_loader):
         return total_correct / len(data_loader.dataset)
 
 
-def train_epochs(model, train_loader, val_loader, test_loader, train_args):
-    epochs, lr = train_args['epochs'], train_args['lr']
-    grad_clip = train_args.get('grad_clip', None)
+def train_epochs(model, train_loader, val_loader, test_loader, cfg):
+    epochs, lr = cfg.epochs, cfg.lr
+    grad_clip = cfg.get('grad_clip', None)
+    pdb.set_trace()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     device = train_args['device']
 
@@ -202,7 +203,7 @@ def main(cfg):
 
 
     ## Training
-    train_losses, val_losses, val_accuracies, test_metrics = train_epochs(model, train_loader, val_loader, test_loader, train_args=train_args)
+    train_losses, val_losses, val_accuracies, test_metrics = train_epochs(model, train_loader, val_loader, test_loader, cfg=cfg)
     
     # Draw Training Plot
     plot_training_plot(train_losses, val_losses, 'Training_Plot', 'training_plot.png')
