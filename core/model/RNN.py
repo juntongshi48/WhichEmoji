@@ -13,15 +13,15 @@ import torch.nn.functional as F
 import pdb
 
 class RNNLM(nn.Module):
-    def __init__(self, params):
+    def __init__(self, cfg):
         super().__init__()
-        self.vocab_size = params['vocab_size']
-        self.d_emb = params['d_emb']
-        self.d_hid = params['d_hid']
-        self.n_layer = params['n_layer']
-        self.batch_size = params['batch_size']
-        self.device = params['device']
-        self.num_class = params['num_class']
+        self.vocab_size = cfg['vocab_size']
+        self.d_emb = cfg['d_emb']
+        self.d_hid = cfg['d_hid']
+        self.n_layer = cfg['n_layer']
+        self.batch_size = cfg['batch_size']
+        self.device = cfg['device']
+        self.num_class = cfg['num_class']
 
         self.encoder = nn.Embedding(self.vocab_size, self.d_emb)
         self.rnn = nn.RNN(self.d_emb, self.d_hid, self.n_layer, batch_first=True)
@@ -76,8 +76,8 @@ class RNNLM(nn.Module):
 
 
 class ATTNLM(RNNLM):
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, cfg):
+        super().__init__(cfg)
         self.attn = Attention(self.d_hid)
         self.rnn = nn.RNN(self.d_emb, self.d_hid, self.n_layer, batch_first=True)
         # the combined_W maps to map combined hidden states and context vectors to d_hid

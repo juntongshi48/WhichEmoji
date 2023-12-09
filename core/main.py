@@ -135,27 +135,21 @@ def train_epochs(model, train_loader, val_loader, test_loader, train_args):
     return train_losses, val_losses, val_accuracies, test_metrics_
 
 def main():
-    id2label = {0: "enraged_face", 
-             1: "face_holding_back_tears", 
-             2:"face_savoring_food", 
-             3: "face_with_tears_of_joy", 
-             4: "fearful_face", 
-             5: "hot_face", 
-             6: "sun", 
-             7: "loudly_crying_face", 
-             8: "smiling_face_with_sunglasses", 
-             9: "thinking_face"}
+    
+    id = list(range(cfg.data.labels))
+    id2label = dict(zip(id, cfg.data.labels))
+    # id2label = {0: "enraged_face", 
+    #          1: "face_holding_back_tears", 
+    #          2:"face_savoring_food", 
+    #          3: "face_with_tears_of_joy", 
+    #          4: "fearful_face", 
+    #          5: "hot_face", 
+    #          6: "sun", 
+    #          7: "loudly_crying_face", 
+    #          8: "smiling_face_with_sunglasses", 
+    #          9: "thinking_face"}
+    
     train_args = {}
-
-    train_args['d_emb'] = 512
-    train_args['d_hid'] = 64
-    train_args['n_layer'] = 1
-    train_args['batch_size'] = 256
-    train_args['epochs'] = 20
-    train_args['lr'] = 5e-4
-    train_args['device'] = 'cuda:1'
-    train_args['attention'] = True
-
     # train_args['d_emb'] = 512
     # train_args['d_hid'] = 64
     # train_args['n_layer'] = 1
@@ -164,7 +158,9 @@ def main():
     # train_args['lr'] = 5e-4
     # train_args['device'] = 'cuda:1'
 
-    train_args['num_class'] = len(id2label) # TODO: connect this to preprocessing
+    # train_args['num_class'] = len(id2label) # TODO: connect this to preprocessing
+    cfg.num_class = len(id)
+    pdb.set_trace()
 
     train_path = "core/dataset/data/processed/train.csv"
     val_path = "core/dataset/data/processed/val.csv"
