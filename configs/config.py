@@ -15,6 +15,7 @@ class Struct:
     __slots__ = ["__dict__"]
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
+            # recursively convert to struct
             if isinstance(value, dict):
                 self.__dict__[key] = Struct(**value)
             else:
@@ -34,8 +35,8 @@ class Struct:
 class Config:
     __slots__ = ["__dict__"]
     def __init__(self, config_file, **kwargs):
-        _config = parse_config(path=config_file, subs_dict=kwargs)
-        pdb.set_trace()
+        _config = parse_config_file(path=config_file)
+        _config = _config.update(kwargs) # merge config_file and sub_arguments
         for key, value in _config.items():
             if isinstance(value, dict):
                 self.__dict__[key] = Struct(**value)
@@ -52,7 +53,7 @@ class Config:
             for k, v in self.__dict__.items()
         }
 
-def parse_config(
+def parse_config_file(
     path=None,
     data=None,
     subs_dict={},

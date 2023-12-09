@@ -230,5 +230,5 @@ if __name__ == '__main__':
     parser.add_argument("--lr", type=float, default=0.0004)
     _args = parser.parse_args()
     cfg = Config(**_args.__dict__)
-
+    pdb.set_trace()
     main()
