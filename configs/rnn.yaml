@@ -1,17 +1,17 @@
-model: 
-  type: 'bayesian'
-  model: 'graph_tf'
-  #BFN 
-  t_min: 1.0e-2
-  #Prior
-  transition: 'uniform'
+# model: 
+#   type: 'bayesian'
+#   model: 'graph_tf'
+#   #BFN 
+#   t_min: 1.0e-2
+#   #Prior
+#   transition: 'uniform'
 
-# model:
-# 	d_emb: 512
-# 	d_hid: 64
-# 	n_layer: 1
-# 	attention: True
+model:
+d_emb: 512
+d_hid: 64
+n_layer: 1
+attention: True
 
-# data:
-# 	data_dir: "core/dataset/data/processed/"
-# 	tokenizer: "word_based" 			# "word_based", "bpe"
+data:
+  data_dir: "core/dataset/data/processed/"
+  tokenizer: "word_based" 			# "word_based", "bpe"
