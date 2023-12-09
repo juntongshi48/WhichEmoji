@@ -2,6 +2,8 @@ import sys
 import os
 from collections import OrderedDict, Counter
 from tqdm import tqdm
+import argparse
+
 import numpy as np
 import pandas as pd
 import torch
@@ -217,4 +219,13 @@ def main():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config_file",
+                        type=str,)
+    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument("--lr", type=float, default=0.0004)
+    _args = parser.parse_args()
+    print(_args)
+    pdb.set_trace()
     main()

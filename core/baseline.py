@@ -7,7 +7,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 
-from main import plot_confusion_matrix
+from core.main import plot_confusion_matrix
 
 import pdb
 
