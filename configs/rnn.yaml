@@ -12,4 +12,4 @@ model:
   attention: True
 data:
   data_dir: "core/dataset/data/processed/"
-  tokenizer: "word_based" 			# "word_based", "bpe"
+  tokenizer: "word_based"        # "word_based", "bpe"
