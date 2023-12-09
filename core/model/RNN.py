@@ -13,19 +13,19 @@ import torch.nn.functional as F
 import pdb
 
 class RNNLM(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, num_class, vocab_size):
         super().__init__()
-        self.vocab_size = cfg['vocab_size']
-        self.d_emb = cfg['d_emb']
-        self.d_hid = cfg['d_hid']
-        self.n_layer = cfg['n_layer']
-        self.batch_size = cfg['batch_size']
-        self.device = cfg['device']
-        self.num_class = cfg['num_class']
+        self.vocab_size = vocab_size
+        self.d_embedding = cfg.d_embedding
+        self.d_hidden = cfg.d_hidden
+        self.n_layer = cfg.n_layer
+        self.batch_size = cfg.batch_size
+        self.device = cfg.device
+        self.num_class = num_class
 
-        self.encoder = nn.Embedding(self.vocab_size, self.d_emb)
-        self.rnn = nn.RNN(self.d_emb, self.d_hid, self.n_layer, batch_first=True)
-        self.decoder = nn.Linear(self.d_hid, self.num_class)
+        self.encoder = nn.Embedding(self.vocab_size, self.d_embedding)
+        self.rnn = nn.RNN(self.d_embedding, self.d_hidden, self.n_layer, batch_first=True)
+        self.decoder = nn.Linear(self.d_hidden, self.num_class)
         self.loss_func = nn.CrossEntropyLoss()
 
         self.epoch = 0
@@ -37,7 +37,7 @@ class RNNLM(nn.Module):
             eos = (N,)
         """
         batch_size, seq_len= x.shape
-        hidden = (torch.zeros(self.n_layer, batch_size, self.d_hid).to(self.device))  # initial hidden state set to zeros
+        hidden = (torch.zeros(self.n_layer, batch_size, self.d_hidden).to(self.device))  # initial hidden state set to zeros
         ## Pass words through the embedding layer
         x = self.encoder(x) # (N, L, H_in)
         ## Pass x, h0 into the RNN
@@ -78,11 +78,11 @@ class RNNLM(nn.Module):
 class ATTNLM(RNNLM):
     def __init__(self, cfg):
         super().__init__(cfg)
-        self.attn = Attention(self.d_hid)
-        self.rnn = nn.RNN(self.d_emb, self.d_hid, self.n_layer, batch_first=True)
-        # the combined_W maps to map combined hidden states and context vectors to d_hid
-        self.combined_W = nn.Linear(self.d_hid * 2, self.d_hid)
-        self.decoder = nn.Linear(self.d_hid, self.num_class)
+        self.attn = Attention(self.d_hidden)
+        self.rnn = nn.RNN(self.d_embedding, self.d_hidden, self.n_layer, batch_first=True)
+        # the combined_W maps to map combined hidden states and context vectors to d_hidden
+        self.combined_W = nn.Linear(self.d_hidden * 2, self.d_hidden)
+        self.decoder = nn.Linear(self.d_hidden, self.num_class)
 
 
     def forward(self, x, eos, return_attn_weights=False):
@@ -99,7 +99,7 @@ class ATTNLM(RNNLM):
                which was received from the forward function of attnetion module
         """
         batch_size, seq_len= x.shape
-        hidden = (torch.zeros(self.n_layer, batch_size, self.d_hid).to(self.device))  # initial hidden state set to zeros
+        hidden = (torch.zeros(self.n_layer, batch_size, self.d_hidden).to(self.device))  # initial hidden state set to zeros
         ## Pass words through the embedding layer
         x = self.encoder(x) # (N, L, H_in)
         ## Pass x, h0 into the RNN
@@ -124,7 +124,7 @@ class ATTNLM(RNNLM):
 class Attention(nn.Module):
     def __init__(self, d_hidden):
         super(Attention, self).__init__()
-        self.d_hid = d_hidden
+        self.d_hidden = d_hidden
 
 
     def forward(self, x):
