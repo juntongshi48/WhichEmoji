@@ -1,10 +1,19 @@
-model:
-	d_emb: 512
-	d_hid: 64
-	n_layer: 1
-	attention: True
+model: 
+  type: 'bayesian'
+  model: 'graph_tf'
+  #BFN 
+  beta_node: !SUB ${beta_node:-3.0} # here  we se beta for the discrete version of bfn
+  beta_edge: !SUB ${beta_edge:-3.0} 
+  t_min: 1.0e-2
+  #Prior
+  transition: 'uniform'
 
-data:
-	data_dir: "core/dataset/data/processed/"
-	tokenizer: "word_based" 			# "word_based", "bpe"
-	
+# model:
+# 	d_emb: 512
+# 	d_hid: 64
+# 	n_layer: 1
+# 	attention: True
+
+# data:
+# 	data_dir: "core/dataset/data/processed/"
+# 	tokenizer: "word_based" 			# "word_based", "bpe"
