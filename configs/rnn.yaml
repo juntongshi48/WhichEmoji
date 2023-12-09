@@ -2,8 +2,6 @@ model:
   type: 'bayesian'
   model: 'graph_tf'
   #BFN 
-  beta_node: !SUB ${beta_node:-3.0} # here  we se beta for the discrete version of bfn
-  beta_edge: !SUB ${beta_edge:-3.0} 
   t_min: 1.0e-2
   #Prior
   transition: 'uniform'
