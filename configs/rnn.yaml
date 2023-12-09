@@ -6,8 +6,8 @@
 #   #Prior
 #   transition: 'uniform'
 model:
-  d_emb: 512
-  d_hid: 64
+  d_embedding: 512
+  d_hidden: 64
   n_layer: 1
   attention: True
 data:
