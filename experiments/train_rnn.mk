@@ -3,7 +3,7 @@ SHELL := /bin/bash
 train_rnn:
 	$(eval GPU_ID:= 7)
 	$(eval EXP_NAME:= $@) 
-	$(eval BATCH_SIZE := 256)
+	$(eval BATCH_SIZE := 1024)
 	$(eval EPOCHS := 20)
 	$(eval LR := 0.0005)
 	${eval CONFIG_FILE := configs/rnn.yaml}
