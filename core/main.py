@@ -195,7 +195,7 @@ def main(cfg):
     vocab_size = vocab_size
 
     ## Select a model
-    if train_args['attention']:
+    if cfg.model.attention:
         model = ATTNLM(cfg, num_class, vocab_size).to(cfg.device)
     else:
         model = RNNLM(cfg, num_class, vocab_size).to(cfg.device)
