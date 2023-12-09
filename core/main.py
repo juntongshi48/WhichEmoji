@@ -175,9 +175,9 @@ def main(cfg):
     val_dataset = twitter_dataset(val_path, tokenizer)
     test_dataset = twitter_dataset(test_path, tokenizer)
 
-    train_loader = data.DataLoader(train_dataset, batch_size=train_args['batch_size'], shuffle=True)
-    val_loader = data.DataLoader(val_dataset, batch_size=train_args['batch_size'], shuffle=False)
-    test_loader = data.DataLoader(test_dataset, batch_size=train_args['batch_size'], shuffle=False)
+    train_loader = data.DataLoader(train_dataset, batch_size=cfg.batch_size, shuffle=True)
+    val_loader = data.DataLoader(val_dataset, batch_size=cfg.batch_size, shuffle=False)
+    test_loader = data.DataLoader(test_dataset, batch_size=cfg.batch_size, shuffle=False)
     
     ## Print data split stats
     loaders = [train_loader, val_loader, test_loader]
