@@ -4,7 +4,7 @@ train_rnn:
 	$(eval GPU_ID:= 7)
 	$(eval EXP_NAME:= $@) 
 	$(eval BATCH_SIZE := 1024)
-	$(eval EPOCHS := 4)
+	$(eval EPOCHS := 10)
 	$(eval LR := 0.0005)
 	${eval CONFIG_FILE := configs/rnn.yaml}
 	-git add .; git commit -m "commit to run"
