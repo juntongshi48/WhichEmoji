@@ -114,8 +114,9 @@ def evaluate_accuracy(model, data_loader):
 
 def train_epochs(model, train_loader, val_loader, test_loader, cfg):
     epochs, lr = cfg.epochs, cfg.lr
-    grad_clip = cfg.get('grad_clip', None)
     pdb.set_trace()
+    grad_clip = cfg.get('grad_clip', None)
+    
     optimizer = optim.Adam(model.parameters(), lr=lr)
     device = train_args['device']
 
