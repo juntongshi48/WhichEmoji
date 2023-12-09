@@ -135,7 +135,6 @@ def train_epochs(model, train_loader, val_loader, test_loader, train_args):
     return train_losses, val_losses, val_accuracies, test_metrics_
 
 def main(cfg):
-    pdb.set_trace()
     id = list(range(len(cfg.data.labels)))
     id2label = dict(zip(id, cfg.data.labels))
     # id2label = {0: "enraged_face", 
@@ -197,9 +196,9 @@ def main(cfg):
 
     ## Select a model
     if train_args['attention']:
-        model = ATTNLM(cfg, num_class, vocab_size).to(train_args['device'])
+        model = ATTNLM(cfg, num_class, vocab_size).to(cfg.device)
     else:
-        model = RNNLM(cfg, num_class, vocab_size).to(train_args['device'])
+        model = RNNLM(cfg, num_class, vocab_size).to(cfg.device)
 
 
     ## Training
@@ -233,6 +232,7 @@ if __name__ == '__main__':
     parser.add_argument("--batch_size", type=int, default=256)
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--lr", type=float, default=0.0004)
+    parser.add_argument("--device", type=str, default='cuda')
     _args = parser.parse_args()
     cfg = Config(**_args.__dict__)
     print(f"The config of this experiment is : \n {cfg}")
