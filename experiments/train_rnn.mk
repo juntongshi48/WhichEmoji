@@ -1,9 +1,8 @@
 SHELL := /bin/bash
 
-
 train_rnn:
 	$(eval GPU_ID:= 7)
-	I$(eval EXP_NAME:= $@) 
+	$(eval EXP_NAME:= $@) 
 	$(eval BATCH_SIZE := 256)
 	$(eval EPOCHS := 20)
 	$(eval LR := 0.0005)
