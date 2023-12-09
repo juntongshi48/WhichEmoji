@@ -16,9 +16,9 @@ class RNNLM(nn.Module):
     def __init__(self, cfg, num_class, vocab_size):
         super().__init__()
         self.vocab_size = vocab_size
-        self.d_embedding = cfg.d_embedding
-        self.d_hidden = cfg.d_hidden
-        self.n_layer = cfg.n_layer
+        self.d_embedding = cfg.model.d_embedding
+        self.d_hidden = cfg.model.d_hidden
+        self.n_layer = cfg.model.n_layer
         self.batch_size = cfg.batch_size
         self.device = cfg.device
         self.num_class = num_class
@@ -78,7 +78,7 @@ class RNNLM(nn.Module):
 class ATTNLM(RNNLM):
     def __init__(self, cfg, num_class, vocab_size):
         super().__init__(cfg, num_class, vocab_size)
-        self.attn = Attention(self.d_hidden)
+        self.attn = Attention()
         self.rnn = nn.RNN(self.d_embedding, self.d_hidden, self.n_layer, batch_first=True)
         # the combined_W maps to map combined hidden states and context vectors to d_hidden
         self.combined_W = nn.Linear(self.d_hidden * 2, self.d_hidden)
@@ -122,9 +122,9 @@ class ATTNLM(RNNLM):
 
 
 class Attention(nn.Module):
-    def __init__(self, d_hidden):
-        super(Attention, self).__init__()
-        self.d_hidden = d_hidden
+    def __init__(self):
+        super().__init__()
+        # self.d_hidden = d_hidden
 
 
     def forward(self, x):
