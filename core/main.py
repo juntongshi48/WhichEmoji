@@ -24,7 +24,7 @@ from core.dataset.twitter_dataset import twitter_dataset
 from core.model.RNN import RNNLM, ATTNLM
 from core.utils.plotting import plot_training_plot, plot_confusion_matrix
 
-def train(model, train_loader, optimizer, epoch, device, grad_clip=None, rectify=False):
+def train(model, train_loader, optimizer, epoch, device, grad_clip=None):
     model.train()
     losses = []
     targets = np.zeros(0)
@@ -114,11 +114,10 @@ def evaluate_accuracy(model, data_loader):
 
 def train_epochs(model, train_loader, val_loader, test_loader, cfg):
     epochs, lr = cfg.epochs, cfg.lr
-    pdb.set_trace()
-    grad_clip = cfg.get('grad_clip', None)
+    grad_clip = cfg.grad_clip if hasattr(cfg, "grad_clip") else None
     
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    device = train_args['device']
+    device = cfg.device
 
     train_losses, val_losses, val_accuracies, test_metrics_ = [], [], [], []
     for epoch in tqdm(range(epochs)):
