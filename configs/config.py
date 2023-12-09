@@ -36,7 +36,7 @@ class Config:
     __slots__ = ["__dict__"]
     def __init__(self, config_file, **kwargs):
         _config = parse_config_file(path=config_file)
-        _config = _config.update(kwargs) # merge config_file and sub_arguments
+        _config.update(kwargs) # merge config_file and sub_arguments
         for key, value in _config.items():
             if isinstance(value, dict):
                 self.__dict__[key] = Struct(**value)
