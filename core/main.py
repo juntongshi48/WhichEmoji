@@ -196,12 +196,12 @@ def main(cfg):
     print(f'Test Macro F1: {test_metrics_best["f1_macro"]}')
 
     # Draw Confusion Matrix
-    att = "att" if cfg.attention else "noatt"
+    att = "att" if cfg.model.attention else "noatt"
     # /core/results/confusion_matrix/
     filename = f'''confusion_matrix/CM
-    _demb{cfg.d_embedding}
-    _dhid{cfg.d_hidden}
-    _nlay{cfg.n_layer}
+    _demb{cfg.model.d_embedding}
+    _dhid{cfg.model.d_hidden}
+    _nlay{cfg.model.n_layer}
     _bs{cfg.batch_size}
     _{att}
     .png'''
@@ -219,4 +219,5 @@ if __name__ == '__main__':
     _args = parser.parse_args()
     cfg = Config(**_args.__dict__)
     print(f"The config of this experiment is : \n {cfg}")
+
     main(cfg)
