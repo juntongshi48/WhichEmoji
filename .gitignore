@@ -3,3 +3,5 @@ core/dataset/data/*
 .*
 CM*.png
 training_plot.png
+processed_data/*
+word_lists/*
