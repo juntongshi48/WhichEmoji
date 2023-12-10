@@ -84,8 +84,13 @@ class preprocessing:
 
     def process_all_csvs_in_directory(self):
         output_dir = "core/dataset/data/processed/"
-        # Ensure output directory exists
-        if not os.path.exists(output_dir):
+        # If output dir exists and data has been processed, delete the processed data.
+        # Else, create a output dir
+        if os.path.exists(output_dir):
+            filelist = os.listdir(output_dir)
+            for filename in filelist:
+                os.remove(os.path.join(output_dir, filename))
+        else:
             os.makedirs(output_dir)
 
         for label, raw_path in self.id2label.items():
@@ -124,5 +129,5 @@ id2label = {0: "enraged_face",
              7: "loudly_crying_face", 
              8: "smiling_face_with_sunglasses", 
              9: "thinking_face"}
-preprop = preprocessing(id2label)
+preprop = preprocessing(id2label, min_sentence_len=10)
 preprop.process_all_csvs_in_directory()

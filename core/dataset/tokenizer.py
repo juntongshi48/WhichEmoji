@@ -9,10 +9,12 @@ import torch.nn as nn
 import torch.utils.data as data
 import torch.optim as optim
 
+import transformers
+
 import pdb
 
 
-class word_based():
+class WordBasedTokenizer():
     def __init__(self, unk_max_frequency=3, min_sentence_len=2, max_sentence_len=60) -> None:
         self.unk_max_frequency = unk_max_frequency
         self.min_sentence_len = min_sentence_len
@@ -80,3 +82,40 @@ class word_based():
                 self.vocab2id[v] = next_v_id
                 next_v_id += 1
         self.id2vocab = {v: k for k, v in self.vocab2id.items()}
+
+class PretrainedTokenizer:
+    def __init__(self, name: str = 'gpt2', min_sentence_len=2, max_sentence_len=60) -> None:
+        self.min_sentence_len = min_sentence_len
+        self.max_sentence_len = max_sentence_len
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(name)
+        # Set padding token
+        self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.vocab2id = self.tokenizer.get_vocab()
+
+    def process(self, sentences, train):
+        """ 
+        Input: a list of sentences with words separated by '\t'
+        Output: a list of tokenized and encoded sentences
+        """
+        self.vocab2id = self.tokenizer.get_vocab()
+        encoded_sentences_ = []
+        eos_ = []
+        for sent in tqdm(sentences):
+            ## Tokenize
+            sent = sent.replace('\t', ' ')
+            tokenized_sent = self.tokenizer.tokenize(sent)
+            ## Encode
+            token2idx = lambda token: self.vocab2id[token]
+            encoded_sent = list(map(token2idx, tokenized_sent))
+            ## Padding
+            eos = len(encoded_sent) - 1
+            if len(encoded_sent) > self.max_sentence_len:
+                encoded_sent = encoded_sent[:self.max_sentence_len]
+                eos = self.max_sentence_len - 1
+            elif len(encoded_sent) < self.max_sentence_len:
+                idx_padding = self.vocab2id[self.tokenizer.pad_token]
+                encoded_sent += [idx_padding] * (self.max_sentence_len - len(encoded_sent))
+            
+            encoded_sentences_.append(encoded_sent)
+            eos_.append(eos)
+        return encoded_sentences_, eos_

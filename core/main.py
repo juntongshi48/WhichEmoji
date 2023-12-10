@@ -18,8 +18,9 @@ import pdb
 
 sys.path.append(os.getcwd())
 
+from core.dataset.preprocessing import preprocessing
 from configs.config import Config
-from core.dataset.tokenizer import word_based
+from core.dataset.tokenizer import WordBasedTokenizer, PretrainedTokenizer
 from core.dataset.twitter_dataset import twitter_dataset
 from core.model.RNN import RNNLM, ATTNLM
 from core.utils.plotting import plot_training_plot, plot_confusion_matrix
@@ -139,13 +140,22 @@ def main(cfg):
     id = list(range(len(cfg.data.labels)))
     id2label = dict(zip(id, cfg.data.labels))
 
+    # preprop = preprocessing(id2label, min_sentence_len=10)
+    # preprop.process_all_csvs_in_directory()
+
     ## dataset and tokenizer
     train_path = os.path.join(cfg.data.data_dir, "train.csv")
     val_path = os.path.join(cfg.data.data_dir, "val.csv")
     test_path = os.path.join(cfg.data.data_dir, "test.csv")
-
+    
+    tokenizer = None
     if cfg.data.tokenizer == "word_based":
-        tokenizer = word_based()
+        tokenizer = WordBasedTokenizer()
+    elif cfg.data.tokenizer == "pretrained":
+        if hasattr(cfg.data, "pretrained_name"):
+            tokenizer = PretrainedTokenizer(cfg.data.pretrained_name)
+        else:
+            tokenizer = PretrainedTokenizer() # bert tokenizer is used by default
     else:
         raise NotImplementedError(f"Unknown tokenizer {cfg.data.tokenizer}")
 
@@ -172,7 +182,7 @@ def main(cfg):
     ## Select a model
     num_class = len(id)
     vocab_size = len(tokenizer.vocab2id)
-    vocab_size = vocab_size
+    print(f"vocab size: {vocab_size}")
     if cfg.model.attention:
         model = ATTNLM(cfg, num_class, vocab_size).to(cfg.device)
     else:
@@ -203,7 +213,8 @@ _demb{cfg.model.d_embedding}\
 _dhid{cfg.model.d_hidden}\
 _nlay{cfg.model.n_layer}\
 _bs{cfg.batch_size}\
-_{att}
+_{att}\
+_{cfg.data.tokenizer}\
 .png'
     plot_confusion_matrix(id2label.values(), test_metrics_best['confusion_matrix'], 'Confusion_Matrix', filename)
 

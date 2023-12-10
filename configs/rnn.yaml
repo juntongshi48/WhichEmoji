@@ -12,7 +12,8 @@ model:
   attention: True
 data:
   data_dir: "core/dataset/data/processed/"
-  tokenizer: "word_based"        # "word_based", "bpe"
+  tokenizer: "pretrained"        # "word_based", "pretrained"
+  # pretrained_name: "bert"
   labels:
     - enraged_face 
     - face_holding_back_tears
