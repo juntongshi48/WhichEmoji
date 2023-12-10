@@ -77,7 +77,7 @@ emoji_unicode_list = [
     '\U00002764',  # red_heart
     '\U0001F923',  # rolling_on_the_floor_laughing
     '\U00002714',  # check_mark
-    '\U0001F62D',  # face_holding_back_tears
+    '\U0001F97A',  # face_holding_back_tears
     '\U0001F4A9',  # pile_of_poo
     '\U0001F621',  # enraged_face
     '\U0001F62D',  # loudly_crying_face

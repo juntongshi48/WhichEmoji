@@ -4,4 +4,7 @@ core/dataset/data/*
 
 confusion_matrix
 training_plot.png
+CM_*
 env_var.sh
+processed_data/*
+word_lists/*
