@@ -10,8 +10,6 @@ import torch.utils.data as data
 import torch.optim as optim
 
 
-import pdb
-
 """
 TODO:
 1. Create Train/val/test datasets
@@ -19,9 +17,10 @@ TODO:
 """
 
 class twitter_dataset (data.Dataset):
-    def __init__(self, data_path, tokenizer, device="cpu", **kwargs):
+    def __init__(self, data_path, tokenizer, train=False, device="cpu", **kwargs):
         self.data_path = data_path
         self.tokenizer = tokenizer
+        self.train = train
         self.device = device
         self.kwargs = kwargs
 
@@ -34,7 +33,7 @@ class twitter_dataset (data.Dataset):
         df = pd.read_csv(self.data_path,  sep=",")
         self.labels = df.iloc[:,0].to_numpy(dtype=np.int32)
         sentences = df.iloc[:,1].to_numpy(dtype=str)
-        self.encoded_sentences, self.eos = self.tokenizer.process(sentences)
+        self.encoded_sentences, self.eos = self.tokenizer.process(sentences, self.train)
 
         # self.data = zip(encoded_sentences, labels)
 

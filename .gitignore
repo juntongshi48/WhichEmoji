@@ -1,7 +1,9 @@
 core/dataset/data/*
 **/__pycache__/
 .*
-CM*.png
+
+confusion_matrix
 training_plot.png
+env_var.sh
 processed_data/*
 word_lists/*

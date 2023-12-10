@@ -2,6 +2,8 @@ import sys
 import os
 from collections import OrderedDict, Counter
 from tqdm import tqdm
+import argparse
+
 import numpy as np
 import pandas as pd
 import torch
@@ -14,66 +16,24 @@ import matplotlib.pyplot as plt
 
 import pdb
 
-from tokenizer import word_based
-from twitter_dataset import twitter_dataset
-from RNN import RNNLM, ATTNLM
+sys.path.append(os.getcwd())
 
+from core.dataset.preprocessing import preprocessing
+from configs.config import Config
+from core.dataset.tokenizer import WordBasedTokenizer, PretrainedTokenizer
+from core.dataset.twitter_dataset import twitter_dataset
+from core.model.RNN import RNNLM, ATTNLM
+from core.utils.plotting import plot_training_plot, plot_confusion_matrix
 
-def plot_training_plot(train_losses, val_losses, title, fname):
-    plt.figure()
-    n_epochs = len(val_losses)-1
-    x_train = np.linspace(0, n_epochs, len(train_losses))
-    x_val = np.arange(n_epochs+1)
-
-    plt.plot(x_train, train_losses, label='CE_train')
-    plt.plot(x_val, val_losses, label='CE_val')
-
-    plt.legend()
-    plt.title(title)
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.tight_layout()
-    plt.savefig(fname)
-
-def plot_confusion_matrix(labels, confusion_matrix, title, fname):
-    fig, ax = plt.subplots()
-    im = ax.imshow(confusion_matrix)
-
-    # Show ticks and label them
-    ax.set_xticks(np.arange(len(labels)))
-    ax.set_yticks(np.arange(len(labels)))
-    ax.set_xticklabels(labels)
-    ax.set_yticklabels(labels)
-    
-    # Rotate x labels and and set label alignments
-    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', rotation_mode="anchor")
-
-    # Label each cell by their corresponding intensty 
-    confusion_matrix = np.round(confusion_matrix, decimals=2)
-    for i in range(len(labels)):
-        for j in range(len(labels)):
-            text = ax.text(j, i, confusion_matrix[i,j], ha="center", va="center", color="w", fontsize='x-small')
-    
-    ax.set_title(title)
-    fig.tight_layout()
-    plt.savefig(fname)
-    
-    # ## Reference: https://matplotlib.org/stable/gallery/images_contours_and_fields/image_annotated_heatmap.html#sphx-glr-gallery-images-contours-and-fields-image-annotated-heatmap-py
-    # ax.spines[:].set_visible(False)
-    # ax.grid(which="major", color="w", linestyle='-', linewidth=3)
-    # ax.tick_params(which="major", bottom=True, left=True)
-
-
-
-def train(model, train_loader, optimizer, epoch, grad_clip=None, rectify=False):
+def train(model, train_loader, optimizer, epoch, device, grad_clip=None):
     model.train()
     losses = []
     targets = np.zeros(0)
     predictions = np.zeros(0)
     for x, eos, y in train_loader:
-        x = x.cuda()
-        eos = eos.cuda()
-        y = y.cuda()
+        x = x.to(device)
+        eos = eos.to(device)
+        y = y.to(device)
         loss = model.loss(x, eos, y)
         
         optimizer.zero_grad()
@@ -105,7 +65,7 @@ def train(model, train_loader, optimizer, epoch, grad_clip=None, rectify=False):
     return losses
 
 
-def eval(model, data_loader):
+def eval(model, data_loader, device):
     model.eval()
     total_loss = 0
     num_batch = 0
@@ -113,9 +73,9 @@ def eval(model, data_loader):
     # targets = np.zeros(0)
     with torch.no_grad():
         for x, eos, y in data_loader:
-            x = x.cuda()
-            eos = eos.cuda()
-            y = y.cuda()
+            x = x.to(device)
+            eos = eos.to(device)
+            y = y.to(device)
             loss = model.loss(x, eos, y).cpu().item()
             total_loss += loss
             num_batch += 1
@@ -153,17 +113,19 @@ def evaluate_accuracy(model, data_loader):
         return total_correct / len(data_loader.dataset)
 
 
-def train_epochs(model, train_loader, val_loader, test_loader, train_args):
-    epochs, lr = train_args['epochs'], train_args['lr']
-    grad_clip = train_args.get('grad_clip', None)
+def train_epochs(model, train_loader, val_loader, test_loader, cfg):
+    epochs, lr = cfg.epochs, cfg.lr
+    grad_clip = cfg.grad_clip if hasattr(cfg, "grad_clip") else None
+    
     optimizer = optim.Adam(model.parameters(), lr=lr)
+    device = cfg.device
 
     train_losses, val_losses, val_accuracies, test_metrics_ = [], [], [], []
     for epoch in tqdm(range(epochs)):
         model.epoch = epoch
-        train_loss = train(model, train_loader, optimizer, epoch, grad_clip)
-        val_metrics = eval(model, val_loader)
-        test_metrics = eval(model, test_loader)
+        train_loss = train(model, train_loader, optimizer, epoch, device, grad_clip)
+        val_metrics = eval(model, val_loader, device)
+        test_metrics = eval(model, test_loader, device)
 
         train_losses.extend(train_loss)
         val_losses.append(val_metrics['loss'])
@@ -174,61 +136,60 @@ def train_epochs(model, train_loader, val_loader, test_loader, train_args):
         
     return train_losses, val_losses, val_accuracies, test_metrics_
 
-def main():
-    id2label = {0: "enraged_face", 
-             1: "face_holding_back_tears", 
-             2:"face_savoring_food", 
-             3: "face_with_tears_of_joy", 
-             4: "fearful_face", 
-             5: "hot_face", 
-             6: "sun", 
-             7: "loudly_crying_face", 
-             8: "smiling_face_with_sunglasses", 
-             9: "thinking_face"}
-    train_args = {}
-    train_args['d_emb'] = 512
-    train_args['d_hid'] = 128
-    train_args['n_layer'] = 5
-    train_args['batch_size'] = 256
-    train_args['epochs'] = 80
-    train_args['lr'] = 5e-5
-    train_args['device'] = 'cuda:0'
-    train_args['attention'] = True
+def main(cfg):
+    id = list(range(len(cfg.data.labels)))
+    id2label = dict(zip(id, cfg.data.labels))
 
-    # train_args['d_emb'] = 512
-    # train_args['d_hid'] = 64
-    # train_args['n_layer'] = 1
-    # train_args['batch_size'] = 128
-    # train_args['epochs'] = 2
-    # train_args['lr'] = 5e-4
-    # train_args['device'] = 'cuda:0'
+    # preprop = preprocessing(id2label, min_sentence_len=10)
+    # preprop.process_all_csvs_in_directory()
 
-    train_args['num_class'] = len(id2label) # TODO: connect this to preprocessing
+    ## dataset and tokenizer
+    train_path = os.path.join(cfg.data.data_dir, "train.csv")
+    val_path = os.path.join(cfg.data.data_dir, "val.csv")
+    test_path = os.path.join(cfg.data.data_dir, "test.csv")
+    
+    tokenizer = None
+    if cfg.data.tokenizer == "word_based":
+        tokenizer = WordBasedTokenizer()
+    elif cfg.data.tokenizer == "pretrained":
+        if hasattr(cfg.data, "pretrained_name"):
+            tokenizer = PretrainedTokenizer(cfg.data.pretrained_name)
+        else:
+            tokenizer = PretrainedTokenizer() # bert tokenizer is used by default
+    else:
+        raise NotImplementedError(f"Unknown tokenizer {cfg.data.tokenizer}")
 
-    train_path = "core/dataset/data/processed/train.csv"
-    val_path = "core/dataset/data/processed/val.csv"
-    test_path = "core/dataset/data/processed/test.csv"
-    tokenizer = word_based()
-
-    train_dataset = twitter_dataset(train_path, tokenizer)
+    train_dataset = twitter_dataset(train_path, tokenizer, train=True)
     val_dataset = twitter_dataset(val_path, tokenizer)
     test_dataset = twitter_dataset(test_path, tokenizer)
-    vocab_size = len(tokenizer.id2vocab)
-    train_args['vocab_size'] = vocab_size
 
-    train_loader = data.DataLoader(train_dataset, batch_size=train_args['batch_size'], shuffle=True)
-    val_loader = data.DataLoader(val_dataset, batch_size=train_args['batch_size'], shuffle=False)
-    test_loader = data.DataLoader(test_dataset, batch_size=train_args['batch_size'], shuffle=False)
+    ## dataloader
+    train_loader = data.DataLoader(train_dataset, batch_size=cfg.batch_size, shuffle=True)
+    val_loader = data.DataLoader(val_dataset, batch_size=cfg.batch_size, shuffle=False)
+    test_loader = data.DataLoader(test_dataset, batch_size=cfg.batch_size, shuffle=False)
+    
+    ## Print data split stats
+    loaders = [train_loader, val_loader, test_loader]
+
+    for loader in loaders:
+        labels = loader.dataset.labels
+        u, counts = np.unique(labels, return_counts=True)
+        print(u)
+        print(counts)
+        print()
+    ## -------------------------------------
 
     ## Select a model
-    if train_args['attention']:
-        model = ATTNLM(train_args).to(train_args['device'])
+    num_class = len(id)
+    vocab_size = len(tokenizer.vocab2id)
+    print(f"vocab size: {vocab_size}")
+    if cfg.model.attention:
+        model = ATTNLM(cfg, num_class, vocab_size).to(cfg.device)
     else:
-        model = RNNLM(train_args).to(train_args['device'])
-
+        model = RNNLM(cfg, num_class, vocab_size).to(cfg.device)
 
     ## Training
-    train_losses, val_losses, val_accuracies, test_metrics = train_epochs(model, train_loader, val_loader, test_loader, train_args=train_args)
+    train_losses, val_losses, val_accuracies, test_metrics = train_epochs(model, train_loader, val_loader, test_loader, cfg=cfg)
     
     # Draw Training Plot
     plot_training_plot(train_losses, val_losses, 'Training_Plot', 'training_plot.png')
@@ -245,11 +206,29 @@ def main():
     print(f'Test Macro F1: {test_metrics_best["f1_macro"]}')
 
     # Draw Confusion Matrix
-    att = "att" if train_args["attention"] else "noatt"
+    att = "att" if cfg.model.attention else "noatt"
     # /core/results/confusion_matrix/
-    filename = f'CM_{train_args["d_emb"]}_{train_args["d_hid"]}_{train_args["n_layer"]}_{train_args["batch_size"]}_{att}.png'
+    filename = f'confusion_matrix/CM\
+_demb{cfg.model.d_embedding}\
+_dhid{cfg.model.d_hidden}\
+_nlay{cfg.model.n_layer}\
+_bs{cfg.batch_size}\
+_{att}\
+_{cfg.data.tokenizer}\
+.png'
     plot_confusion_matrix(id2label.values(), test_metrics_best['confusion_matrix'], 'Confusion_Matrix', filename)
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config_file",
+                        type=str,)
+    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument("--lr", type=float, default=0.0004)
+    parser.add_argument("--device", type=str, default='cuda')
+    _args = parser.parse_args()
+    cfg = Config(**_args.__dict__)
+    print(f"The config of this experiment is : \n {cfg}")
+
+    main(cfg)

@@ -2,12 +2,12 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 
-from main import plot_confusion_matrix
+from core.main import plot_confusion_matrix
 
 import pdb
 
@@ -40,14 +40,19 @@ X_test_vec = vectorizer.transform(X_test)
 
 print("start training")
 
+model_name = 'SVM'
+
 # random forest
 # clf = RandomForestClassifier()
 
-# SVM
-clf = SGDClassifier(loss='hinge', max_iter=10000, tol=1e-3)  # 'hinge' gives a linear SVM
-
-# multinomial naive bayes
-# clf = MultinomialNB()
+if model_name == 'SVM':
+    # SVM
+    clf = SGDClassifier(loss='squared_hinge', max_iter=10000, tol=1e-4)  # 'hinge' gives a linear SVM
+elif model_name == 'NB':
+    # multinomial naive bayes
+    clf = MultinomialNB()
+else:
+    raise ValueError("Model with the input name hasn't been implemented")
 
 clf.fit(X_train_vec, y_train)
 
@@ -58,10 +63,13 @@ y_pred_train = clf.predict(X_train_vec)
 
 
 accuracy = accuracy_score(y_train, y_pred_train)
-print(f"Train Accuracy: {accuracy*100:.2f}%")
+print(f"Train Accuracy: {accuracy*100:.4f}%")
 
 accuracy = accuracy_score(y_test, y_pred_test)
-print(f"Test Accuracy: {accuracy*100:.2f}%")
+print(f"Test Accuracy: {accuracy*100:.4f}%")
+
+f1_macro = f1_score(y_test, y_pred_test, average='macro')
+print(f"Test F1 Macro: {f1_macro}")
 
 confus_mtx = confusion_matrix(y_test, y_pred_test, normalize='true')
-plot_confusion_matrix(id2label.values(), confus_mtx, 'Confusion Matrix', 'CM_SVM.png')
+plot_confusion_matrix(id2label.values(), confus_mtx, f'Confusion Matrix of {model_name}', f'CM_{model_name}.png')
