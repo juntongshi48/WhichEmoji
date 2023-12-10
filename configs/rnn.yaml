@@ -14,6 +14,9 @@ data:
   data_dir: "core/dataset/data/processed/"
   tokenizer: "pretrained"        # "word_based", "pretrained"
   # pretrained_name: "bert"
+  min_sentence_len: 5
+  # max_sentence_len:
+  unk_max_frequency: 3
   labels:
     - enraged_face 
     - face_holding_back_tears

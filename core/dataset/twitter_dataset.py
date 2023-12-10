@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.utils.data as data
 import torch.optim as optim
 
+import pdb
 
 """
 TODO:
@@ -34,7 +35,6 @@ class twitter_dataset (data.Dataset):
         self.labels = df.iloc[:,0].to_numpy(dtype=np.int32)
         sentences = df.iloc[:,1].to_numpy(dtype=str)
         self.encoded_sentences, self.eos = self.tokenizer.process(sentences, self.train)
-
         # self.data = zip(encoded_sentences, labels)
 
         # xytuple = zip(encoded_sentences, labels)

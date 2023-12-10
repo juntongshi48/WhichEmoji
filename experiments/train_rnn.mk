@@ -1,10 +1,10 @@
 SHELL := /bin/bash
 
 train_rnn:
-	$(eval GPU_ID:= 7)
+	$(eval GPU_ID:= 0)
 	$(eval EXP_NAME:= $@) 
-	$(eval BATCH_SIZE := 1024)
-	$(eval EPOCHS := 30)
+	$(eval BATCH_SIZE := 512)
+	$(eval EPOCHS := 15)
 	$(eval LR := 0.0005)
 	${eval CONFIG_FILE := configs/rnn.yaml}
 	${eval REVISION := ${shell git rev-parse --short HEAD}}

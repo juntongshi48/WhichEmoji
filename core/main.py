@@ -149,13 +149,14 @@ def main(cfg):
     test_path = os.path.join(cfg.data.data_dir, "test.csv")
     
     tokenizer = None
+    kwargs = dict(min_sentence_len=cfg.data.min_sentence_len, unk_max_frequency=cfg.data.unk_max_frequency)
     if cfg.data.tokenizer == "word_based":
-        tokenizer = WordBasedTokenizer()
+        tokenizer = WordBasedTokenizer(**kwargs)
     elif cfg.data.tokenizer == "pretrained":
         if hasattr(cfg.data, "pretrained_name"):
-            tokenizer = PretrainedTokenizer(cfg.data.pretrained_name)
+            tokenizer = PretrainedTokenizer(cfg.data.pretrained_name, **kwargs)
         else:
-            tokenizer = PretrainedTokenizer() # bert tokenizer is used by default
+            tokenizer = PretrainedTokenizer(**kwargs) # bert tokenizer is used by default
     else:
         raise NotImplementedError(f"Unknown tokenizer {cfg.data.tokenizer}")
 
@@ -182,7 +183,7 @@ def main(cfg):
     ## Select a model
     num_class = len(id)
     vocab_size = len(tokenizer.vocab2id)
-    print(f"vocab size: {vocab_size}")
+    print(f"Vocab Size: {vocab_size}")
     if cfg.model.attention:
         model = ATTNLM(cfg, num_class, vocab_size).to(cfg.device)
     else:
