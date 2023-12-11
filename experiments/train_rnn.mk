@@ -8,8 +8,6 @@ train_rnn:
 	$(eval LR := 0.0005)
 	${eval CONFIG_FILE := configs/rnn.yaml}
 	${eval REVISION := ${shell git rev-parse --short HEAD}}
-	source env_var.sh; \
 	CUDA_VISIBLE_DEVICES=${GPU_ID} python core/main.py --config_file ${CONFIG_FILE} \
 		--batch_size ${BATCH_SIZE} --epochs ${EPOCHS} --lr ${LR} 
 
-		
