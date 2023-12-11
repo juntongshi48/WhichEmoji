@@ -19,6 +19,18 @@ class preprocessing:
         self.test_size = test_size
         self.val_size = val_size
         self.min_sentence_len = min_sentence_len
+        self.target_emojis = [
+            '\U0001F621',  # enraged_face
+            '\U0001F979',  # face_holding_back_tears
+            '\U0001F60B',  # face_savoring_food
+            '\U0001F602',  # face_with_tears_of_joy
+            '\U0001F628',  # fearful_face
+            '\U0001F975',  # hot_face
+            '\U0001F607',  # smiling_face_with_halo
+            '\U0001F62D',  # loudly_crying_face
+            '\U0001F60E',  # smiling_face_with_sunglasses
+            '\U0001F914',  # thinking_face
+        ]
 
 
 
@@ -39,8 +51,11 @@ class preprocessing:
         tweet = re.sub(r"[^a-z\s'/]", '', tweet)
         
         return tweet
+    
+    def label_tweet(self, tweet):
+        return [1 if emoji in tweet else 0 for emoji in self.target_emojis]
 
-    def process_and_save_to_csv(self, raw_path, output_dir, label):
+    def process_and_save_to_csv(self, raw_path, output_dir, label, use_new_labeling=False):
         # Read the input CSV file
         with open(raw_path, 'r') as infile:
             reader = csv.reader(infile)
@@ -48,10 +63,11 @@ class preprocessing:
             next(reader)
             tweets = [row[0] for row in reader]
 
-        """ 
+        """
         Prefiltering
         """
         processed_tweets = []
+        labels = []
         for tweet in tweets:
             # Special Char
             filtered_tweet = self.filter_special_characters(tweet)
@@ -62,10 +78,13 @@ class preprocessing:
             if len(tokenized_tweet) >= self.min_sentence_len:
                 joined_tweets = "\t".join(tokenized_tweet)
                 processed_tweets.append(joined_tweets)
+                if use_new_labeling:
+                    labels.append(self.label_tweet(tweet))
+                else:
+                    labels.append([label])  # Use old labeling method
 
         # Split into Train, Test, (Val)
-        emoji_label = [label] * len(processed_tweets) # BUG: writerow() only accepts list as input, so we need to wrap the interger with list
-        x_train, x_test, y_train, y_test = train_test_split(processed_tweets, emoji_label, test_size=self.test_size) # TODO: Pass random_state to control the random seed that determines the state
+        x_train, x_test, y_train, y_test = train_test_split(processed_tweets, labels, test_size=self.test_size)
         x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=self.val_size) 
         output = [zip(y_train, x_train), zip(y_val, x_val), zip(y_test, x_test)]
         
@@ -83,7 +102,8 @@ class preprocessing:
                     writer.writerow(data)
 
     def process_all_csvs_in_directory(self):
-        output_dir = "core/dataset/data/processed/"
+        # output_dir = "core/dataset/data/processed/"
+        output_dir = "core/dataset/data/multilabel/" # output dir for multilabel
         # If output dir exists and data has been processed, delete the processed data.
         # Else, create a output dir
         if os.path.exists(output_dir):
@@ -95,7 +115,7 @@ class preprocessing:
 
         for label, raw_path in self.id2label.items():
             raw_path = "core/dataset/data/raw/" + raw_path + ".csv"
-            self.process_and_save_to_csv(raw_path, output_dir, label)
+            self.process_and_save_to_csv(raw_path, output_dir, label, True) # set to false to disable multilabel
     
 
         # # Loop over all CSV files in the input directory
@@ -125,7 +145,7 @@ id2label = {0: "enraged_face",
              3: "face_with_tears_of_joy", 
              4: "fearful_face", 
              5: "hot_face", 
-             6: "sun", 
+             6: "smiling_face_with_halo", 
              7: "loudly_crying_face", 
              8: "smiling_face_with_sunglasses", 
              9: "thinking_face"}
