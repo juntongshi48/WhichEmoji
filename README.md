@@ -2,11 +2,14 @@
 
 Authors: Juntong Shi, Tianrui Xia, Simon To
 
+⭐️ README template credit: https://github.com/Lorenayannnnn/csci467_music_genre_classification/blob/main/README.md?plain=1
+
 ## Table of Content
-- [Clone the repo & install requirements](#clone-the-repo--install-requirements)
+- [Hardware Requirement](#hardware-requirement)
+- [Environment Setup](#environment-setup)
 - [Dataset Preparation](#dataset-preparation)
 - [Baseline](#baseline)
-- [CNN](#CNN)
+- [RNN Model](#RNN-Model)
 - [Wav2Vec-based Model](#wav2vec-based-model)
 
 ## Hardware Requirement
@@ -24,6 +27,10 @@ Authors: Juntong Shi, Tianrui Xia, Simon To
     ```
     conda create -c conda-forge -n WhichEmoji python=3.9
     ```
+- Activate the environment:
+    ```
+    conda activate WhichEmoji
+    ```
 - Install requirements:
     ```
     pip3 install -r requirements.txt
@@ -31,16 +38,19 @@ Authors: Juntong Shi, Tianrui Xia, Simon To
 
 ## Dataset Preparation
 - We use *Tweets With Emoji* from kaggle. Please download the data with the link https://www.kaggle.com/datasets/ericwang1011/tweets-with-emoji .
-- Place data  under the [data](/data) directory. The project should have the following structure:
+- Unzip the file and rename the data folder as **raw**. Place this folder under the [core/dadtaset/data](core/dataset/data/) directory. The project should have the following structure:
 ```
-    └── Baseline_Logistic_Regression
-    └── CNN_*
-    └── data
-        ├── genres_original
-        ├── images_original
-        ├── features_3_sec.csv
-        └── features_30_sec.csv
-    └── Wav2Vec2ForGenreClassification
+    └── configs
+    └── core
+        └── dataset
+            └── data
+                └── raw
+            ...
+        └── model 
+        ├── baseline.py
+        ├── main.py
+    └── experiments
+        ├── train_rnn.mk
     ...
 ```
 
@@ -51,8 +61,8 @@ cd Baseline_Logistics_Regression
 python ImageSoftmax.py  -r 0.001 -b 32 -T 500 --test
 ```
 
-## CNN
-- CNN_midterm and CNN_final folders contain training, testing, model, and some other files used for midterm and final report. 
+## RNN Model
+- The configeration of model and data hyperparamerters are stored in [configs/rnn.yaml](configs/rnn.yaml). T
 - Go to CNN_final folder:
     ```
     cd CNN_final
@@ -70,18 +80,3 @@ python ImageSoftmax.py  -r 0.001 -b 32 -T 500 --test
     python test.py
     ```
     to test the model on the test set, where accuracy and confusion matrix are computed.
-
-## Wav2Vec-based Model
-- Go to Wav2Vec2ForGenreClassification folder:
-  ```
-  cd Wav2Vec2ForGenreClassification
-  ```
-- Run train:
-  ```
-  bash train.sh
-  ```
-  *Values of all hyperparameters and output directory are defined in this [train.sh](./Wav2Vec2ForGenreClassification/train.sh) script. Change the script for experiment purpose.
-- Run evaluation:
-  - Go to [eval.sh](./Wav2Vec2ForGenreClassification/eval.sh) script
-  - Change ```model_name_or_path``` to the model checkpoint that you have saved.
-  - Run ```bash eval.sh```

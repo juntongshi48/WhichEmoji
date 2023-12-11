@@ -6,9 +6,11 @@ from sklearn.metrics import accuracy_score, f1_score
 import random
 from sklearn.preprocessing import StandardScaler
 
+import pdb
+
 # Load training and test data
-train_df = pd.read_csv('core/dataset/data/multilabel/train.csv')
-test_df = pd.read_csv('core/dataset/data/multilabel/test.csv')
+train_df = pd.read_csv('core/dataset/data/processed/train.csv')
+test_df = pd.read_csv('core/dataset/data/processed/test.csv')
 
 # Assuming the first column is labels and the second column is tweets
 X_train = train_df.iloc[:, 1]
@@ -34,6 +36,7 @@ predictions = model.predict(X_test_scaled)
 
 # Evaluate the model
 accuracy = accuracy_score(y_test, predictions)
+pdb.set_trace()
 f1 = f1_score(y_test, predictions, average='macro')
 print(f'Accuracy: {accuracy}, F1 Score: {f1}')
 

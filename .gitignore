@@ -1,5 +1,6 @@
 core/dataset/data/*
 **/__pycache__/
+**/.DS_Store/
 .*
 
 confusion_matrix

@@ -6,25 +6,27 @@
 #   #Prior
 #   transition: 'uniform'
 model:
-  d_embedding: 512
-  d_hidden: 64
-  n_layer: 1
+  d_embedding: 256
+  d_hidden: 128
+  n_layer: 5
   attention: True
+  loss: "softmax"     # "softmax", "BCE"
+  threshold: 0.5
 data:
   data_dir: "core/dataset/data/processed/"
-  tokenizer: "pretrained"        # "word_based", "pretrained"
+  tokenizer: "word_based"        # "word_based", "pretrained"
   # pretrained_name: "bert"
-  min_sentence_len: 5
+  min_sentence_len: 10
   # max_sentence_len:
   unk_max_frequency: 3
   labels:
     - enraged_face 
     - face_holding_back_tears
     - face_savoring_food
-    - face_with_tears_of_joy, 
-    - fearful_face, 
-    - hot_face, 
-    - sun, 
-    - loudly_crying_face, 
-    - smiling_face_with_sunglasses, 
+    - face_with_tears_of_joy 
+    - fearful_face
+    - hot_face 
+    - smiling_face_with_halo
+    - loudly_crying_face
+    - smiling_face_with_sunglasses
     - thinking_face
