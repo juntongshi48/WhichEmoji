@@ -91,6 +91,9 @@ class preprocessing:
             # If need multiclass labels, get a list of multiclass labels in one-hot
             if self.multi_class_label:
                 label_list = self.label_tweet(tweet)
+                # Drop the tweet if no emoji is found
+                if all([label == 0 for label in label_list]):
+                    continue
             else:
                 label_list = [label]
             # Filter Emojis
@@ -172,8 +175,9 @@ id2label = {0: "enraged_face",
              7: "loudly_crying_face", 
              8: "smiling_face_with_sunglasses", 
              9: "thinking_face"}
-# preprop = preprocessing(id2label, min_sentence_len=10, multi_class_label=False)
-# preprop.process_all_csvs_in_directory()
+
+preprop = preprocessing(id2label, min_sentence_len=10, multi_class_label=True)
+preprop.process_all_csvs_in_directory()
 
 
 emoji_unicode_list = [

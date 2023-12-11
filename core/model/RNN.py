@@ -12,6 +12,32 @@ import torch.nn.functional as F
 
 import pdb
 
+class SoftMaxLoss(nn.Module):
+    """
+        logit: (N,C), raw logits
+        y: (N,C), values should be {0,1}
+        pos_weight: trade-off between the loss of positive and negative classes
+            pos_weight > 1 favors recall, as those ground-truth positve samples are increasingly weighted
+            pos_weight < 1 favors precision.
+        L(logit, y) = -(pos_weight*y*log(softmax(logit) + (1-y)*log(1-softmax(logit)))
+    """
+    def __init__(self, pos_weight: float=1):
+        super().__init__()
+        self.pos_weight = pos_weight
+    
+    def forward(self, logit, y):
+        # Normalize multicalss label y to probabilities
+        num_pos_class = torch.sum(y, dim=1, keepdim=True)
+        y = y / torch.sum(y, dim=1, keepdim=True)
+        # Convert logits to probabilities
+        epsilon = 1e-8
+        prob = F.softmax(logit, dim=1)
+        prob = (prob + epsilon) / (1 + epsilon * logit.shape[1]) # for numerical stability, avoid zero prob
+        # Compute loss
+        total_loss = - (self.pos_weight * y * torch.log(prob) + (1-y) * torch.log(1-prob))
+        avg_loss = torch.mean(total_loss)
+        return avg_loss
+
 class RNNLM(nn.Module):
     def __init__(self, cfg, num_class, vocab_size):
         super().__init__()
@@ -30,9 +56,14 @@ class RNNLM(nn.Module):
         self.num_output_labels = cfg.num_output_labels
         self.loss_func = nn.CrossEntropyLoss()
         if self.num_output_labels > 1:
-            self.loss_func = nn.BCEWithLogitsLoss()
-        
+            if cfg.model.loss == "softmax":
+                self.loss_func = SoftMaxLoss()
+            elif cfg.model.loss == "BCE":
+                self.loss_func = nn.BCEWithLogitsLoss()
+            else:
+                raise NotImplementedError("The loss funcion {cfg.model.loss} is not implemented")
         # self.epoch = 0
+        self.threshold = cfg.model.threshold if hasattr(cfg.model, "threshold") else (1/self.num_class) 
 
     def forward(self, x, eos):
         """
@@ -74,19 +105,38 @@ class RNNLM(nn.Module):
         #     pdb.set_trace()
         
         # if epoch == 10:
+        #     l1 = self.loss_func(logit[:2], y[:2])
+        #     l2 = self.loss_func(y[:2]*100, y[:2])
+        #     l3 = self.loss_func((y[:2]*2-1)*100, y[:2])
+        #     print(logit[:2])
+        #     print(l1)
+        #     print(y[:2]*100)
+        #     print(l2)
+        #     print((y[:2]*2-1)*100)
+        #     print(l3)
         #     pdb.set_trace()
         return loss
 
-    def predict(self, x, eos):
+    def predict(self, x, eos, recommand=False):
+        """
+            if single-label
+                output: [N], each row contains the predicted label
+            if multi-label
+                if not recommand
+                    output: [N,C], each row contains a 10-class prediction 
+                        determined by the prediced probabilitie and the threshold
+                if recommand
+                    output: [N, num_output_labels], each row contains the top recommanded labels
+        """
         logit = self.forward(x, eos) # (N,K)
         with torch.no_grad():
             y_pred = torch.argsort(logit, dim=1, descending=True)[:,:self.num_output_labels]
             y_pred = torch.squeeze(y_pred) # squeeze for single-class
-            if self.num_output_labels > 1:
+            if self.num_output_labels > 1 and not recommand:
                 prob = F.softmax(logit, dim=1)
-                y_pred = prob > (1/self.num_class)
+                y_pred = prob > self.threshold
             return y_pred.cpu().numpy()
-
+        
 
 class ATTNLM(RNNLM):
     def __init__(self, cfg, num_class, vocab_size):
