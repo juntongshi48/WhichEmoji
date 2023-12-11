@@ -26,9 +26,13 @@ class RNNLM(nn.Module):
         self.encoder = nn.Embedding(self.vocab_size, self.d_embedding)
         self.rnn = nn.RNN(self.d_embedding, self.d_hidden, self.n_layer, batch_first=True)
         self.decoder = nn.Linear(self.d_hidden, self.num_class)
+        
+        self.num_output_labels = cfg.num_output_labels
         self.loss_func = nn.CrossEntropyLoss()
-
-        self.epoch = 0
+        if self.num_output_labels > 1:
+            self.loss_func = nn.BCEWithLogitsLoss()
+        
+        # self.epoch = 0
 
     def forward(self, x, eos):
         """
@@ -50,7 +54,7 @@ class RNNLM(nn.Module):
 
         return logit
     
-    def loss(self, x, eos, y):
+    def loss(self, x, eos, y, epoch):
         """
             Inputs
             x = (N, L)
@@ -59,6 +63,8 @@ class RNNLM(nn.Module):
         """
         n = x.shape[0]
         logit = self.forward(x, eos) # (N,K)
+        if self.num_output_labels > 1:
+            y = y.to(torch.float32) # BUG: nn.BCEWithLogitsLoss() requires the target to be float values
         loss = self.loss_func(logit, y) # BUG: nn.CrossEntropyLoss() by default takes the mean (recall the argument reduction='mean')
         # For DEBUG -- compare logits with true labels
         # if self.epoch == 1:
@@ -66,12 +72,19 @@ class RNNLM(nn.Module):
         #     print(torch.cat((logit,y.unsqueeze(-1)), dim=-1)[:10])
         #     print(f'loss: {loss}')
         #     pdb.set_trace()
+        
+        # if epoch == 10:
+        #     pdb.set_trace()
         return loss
 
     def predict(self, x, eos):
         logit = self.forward(x, eos) # (N,K)
         with torch.no_grad():
-            y_pred = torch.argmax(logit, dim=-1)
+            y_pred = torch.argsort(logit, dim=1, descending=True)[:,:self.num_output_labels]
+            y_pred = torch.squeeze(y_pred) # squeeze for single-class
+            if self.num_output_labels > 1:
+                prob = F.softmax(logit, dim=1)
+                y_pred = prob > (1/self.num_class)
             return y_pred.cpu().numpy()
 
 

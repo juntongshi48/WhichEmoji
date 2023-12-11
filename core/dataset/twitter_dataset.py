@@ -19,6 +19,7 @@ TODO:
 
 class twitter_dataset (data.Dataset):
     def __init__(self, data_path, tokenizer, train=False, device="cpu", **kwargs):
+        super().__init__()
         self.data_path = data_path
         self.tokenizer = tokenizer
         self.train = train
@@ -32,7 +33,16 @@ class twitter_dataset (data.Dataset):
     
     def process(self):
         df = pd.read_csv(self.data_path,  sep=",")
-        self.labels = df.iloc[:,0].to_numpy(dtype=np.int32)
+        ## Process labels
+        df_label = df.iloc[:,0]
+        strlist2list = lambda strlist: strlist.strip('][').split(', ')
+        df_label = df_label.apply(strlist2list)
+        df_label = df_label.to_numpy().tolist()
+        self.labels = np.asarray(df_label, dtype=np.int32)
+        # Squeeze the label array if one-class
+        self.labels = np.squeeze(self.labels)
+
+        ## Process sentences
         sentences = df.iloc[:,1].to_numpy(dtype=str)
         self.encoded_sentences, self.eos = self.tokenizer.process(sentences, self.train)
         # self.data = zip(encoded_sentences, labels)
