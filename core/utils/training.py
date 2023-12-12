@@ -4,6 +4,8 @@ import torch.optim as optim
 from tqdm import tqdm
 from sklearn.metrics import f1_score, confusion_matrix
 
+import pdb
+
 class myTrainer:
     def __init__(self, model, train_loader, val_loader, test_loader, cfg):
         self.model = model
@@ -54,14 +56,16 @@ class myTrainer:
         #         pbar.update(x.shape[0])
         # if not quiet:
         #     pbar.close()
-        isTrue = predictions==targets
-        if len(targets.shape) > 1:
-            # import pdb
-            # pdb.set_trace()
-            isTrue = np.all(predictions==targets, axis=1)
-        accuracy = np.sum(isTrue) / len(self.train_loader.dataset)
+        # isTrue = predictions==targets
+        # if len(targets.shape) > 1:
+        #     # import pdb
+        #     # pdb.set_trace()
+        #     isTrue = np.all(predictions==targets, axis=1)
+        # accuracy = np.sum(isTrue) / len(self.train_loader.dataset)
+        accuracy = self.eval_acc(predictions, targets)
         print(f'train_accuracy: {accuracy}')
-        return losses
+        train_metrics = dict(loss=losses, accuracy=accuracy)
+        return train_metrics
 
 
     def eval(self, data_loader):
@@ -95,10 +99,11 @@ class myTrainer:
             #     print(desc)
         loss = total_loss / num_batch
         targets = data_loader.dataset.labels
-        isTrue = predictions==targets
-        if len(targets.shape) > 1:
-            isTrue = np.all(predictions==targets, axis=1)
-        accuracy = np.sum(isTrue) / len(data_loader.dataset)
+        # isTrue = predictions==targets
+        # if len(targets.shape) > 1:
+        #     isTrue = np.all(predictions==targets, axis=1)
+        # accuracy = np.sum(isTrue) / len(data_loader.dataset)
+        accuracy = self.eval_acc(predictions, targets)
         f1_macro = f1_score(targets, predictions, average='macro')
         if self.cfg.num_output_labels == 1:
             confus_matrix = confusion_matrix(targets, predictions, normalize='true')
@@ -106,6 +111,19 @@ class myTrainer:
         else:
             eval_metrics = dict(loss=loss, accuracy=accuracy, f1_macro=f1_macro)
         return eval_metrics
+
+    def eval_acc(self, predictions, targets):
+        isTrue = None
+        if len(targets.shape) > 1:
+            if self.cfg.metrics.relaxed:
+                isTrue = np.all((predictions-targets) >= 0, axis=1)
+            else:
+                isTrue = np.all(predictions==targets, axis=1)
+        else:
+            isTrue = predictions==targets
+        accuracy = np.mean(isTrue)
+        return accuracy
+    
 
     # def evaluate_accuracy(self, self.model, data_loader):
     #         self.model.eval()
@@ -127,18 +145,19 @@ class myTrainer:
         
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
-        train_losses, val_losses, val_accuracies, test_metrics_ = [], [], [], []
+        train_losses, val_losses, train_accuracies, val_accuracies, test_metrics_ = [], [], [], [], []
         for epoch in tqdm(range(epochs)):
             self.model.epoch = epoch
-            train_loss = self.train(optimizer, epoch)
+            train_metrics = self.train(optimizer, epoch)
             val_metrics = self.eval(self.val_loader)
             test_metrics = self.eval(self.test_loader)
 
-            train_losses.extend(train_loss)
+            train_losses.extend(train_metrics['loss'])
+            train_accuracies.append(train_metrics['accuracy'])
             val_losses.append(val_metrics['loss'])
             val_accuracies.append(val_metrics['accuracy'])
             test_metrics_.append(test_metrics)
             print('epoch: %d, avg_train_loss: %0.8f, avg_val_loss: %0.8f, val_accuracy: %0.4f' %\
-                (epoch, sum(train_loss)/len(train_loss), val_metrics['loss'], val_metrics['accuracy']))
+                (epoch, sum(train_metrics['loss'])/len(train_metrics['loss']), val_metrics['loss'], val_metrics['accuracy']))
             
-        return train_losses, val_losses, val_accuracies, test_metrics_
+        return train_losses, val_losses, train_accuracies, val_accuracies, test_metrics_

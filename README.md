@@ -9,8 +9,8 @@ Authors: Juntong Shi, Tianrui Xia, Simon To
 - [Environment Setup](#environment-setup)
 - [Dataset Preparation](#dataset-preparation)
 - [Baseline](#baseline)
+- [SVM](#svm)
 - [RNN Model](#RNN-Model)
-- [Wav2Vec-based Model](#wav2vec-based-model)
 
 ## Hardware Requirement
 - GPUs are highly recommanded for the RNN model experiments.
@@ -55,28 +55,29 @@ Authors: Juntong Shi, Tianrui Xia, Simon To
 ```
 
 ## Baseline
-To reproduce the results, run the following under the go to [Baseline_Logistics_Regression](Baseline_Logistic_Regression) directory (assuming lr = 0.001, 500 epochs, and batch size of 32). Add the --test flag to evaluate trained model on test set
+To reproduce the baseline results, run the following at the root of the repository and everything will be taken care of
 ```
-cd Baseline_Logistics_Regression
-python ImageSoftmax.py  -r 0.001 -b 32 -T 500 --test
+python3 core/baseline.py --model NB
 ```
-
+The confusion matrices will be stored under the new folder confusion_matrix/
+## SVM
+Similarly, you can reproduce the result of SVM by running
+```
+python3 core/baseline.py --model SVM
+```
+The confusion matrices will be stored under the new folder confusion_matrix/
 ## RNN Model
-- The configeration of model and data hyperparamerters are stored in [configs/rnn.yaml](configs/rnn.yaml). T
-- Go to CNN_final folder:
+- The configeration of model and data hyperparamerters are stored in [configs/rnn.yaml](configs/rnn.yaml).
+- The configeration of training hyperparamerters are stored as variable in [configs/train_rnn.mk](configs/train_rnn.mk).
+- If GPU are availabel, please set GPU_ID in the targes of [configs/train_rnn.mk](configs/train_rnn.mk). Otherwise, the training of RNN will be done on CPU by default
+- To reproduce the RNN's model's results on the single-label classification task, remain at the root of the repository and run:
     ```
-    cd CNN_final
+    make -f experiments/train_rnn.mk train_rnn
     ```
-- To reproduce the results, run (if CUDA is enabled)
+    - The confusion matrix will be stored under the new folder confusion_matrix/
+    - The trianing curve will be stored under the new folder training_plot/
+    - The metrics values will appear in the terminal as training preceeds.
+- To reproduce the result on multi-label classification, run
     ```
-    CUDA_VISIBLE_DEVICE=0 python train.py
+    make -f experiments/train_rnn.mk train_rnn_multiclass
     ```
-- or (without CUDA)
-    ```
-    python train.py
-    ```
-- Assuming all necessary packages and dataset have been installed. Then run
-    ```
-    python test.py
-    ```
-    to test the model on the test set, where accuracy and confusion matrix are computed.

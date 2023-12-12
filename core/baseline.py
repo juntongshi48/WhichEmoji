@@ -7,9 +7,22 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 
-from core.main import plot_confusion_matrix
+import sys
+import os
+sys.path.append(os.getcwd())
+
+from core.dataset.preprocessing import preprocessing
+from core.utils.plotting import plot_confusion_matrix
+
+import argparse
 
 import pdb
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--model",
+                    type=str, default="NB")
+_args = parser.parse_args()
+model_name = _args.__dict__["model"]
 
 id2label = {0: "enraged_face", 
              1: "face_holding_back_tears", 
@@ -17,10 +30,13 @@ id2label = {0: "enraged_face",
              3: "face_with_tears_of_joy", 
              4: "fearful_face", 
              5: "hot_face", 
-             6: "sun", 
+             6: "smiling_face_with_haloun", 
              7: "loudly_crying_face", 
              8: "smiling_face_with_sunglasses", 
              9: "thinking_face"}
+
+preprop = preprocessing(id2label, min_sentence_len=10, multi_class_label=False)
+preprop.process_all_csvs_in_directory()
 
 train_dir = "core/dataset/data/processed/train.csv"
 test_dir = "core/dataset/data/processed/test.csv"
@@ -40,14 +56,13 @@ X_test_vec = vectorizer.transform(X_test)
 
 print("start training")
 
-model_name = 'SVM'
 
 # random forest
 # clf = RandomForestClassifier()
 
 if model_name == 'SVM':
     # SVM
-    clf = SGDClassifier(loss='squared_hinge', max_iter=10000, tol=1e-4)  # 'hinge' gives a linear SVM
+    clf = SGDClassifier(max_iter=10000, tol=1e-4)  # 'hinge' gives a linear SVM
 elif model_name == 'NB':
     # multinomial naive bayes
     clf = MultinomialNB()
@@ -71,5 +86,6 @@ print(f"Test Accuracy: {accuracy*100:.4f}%")
 f1_macro = f1_score(y_test, y_pred_test, average='macro')
 print(f"Test F1 Macro: {f1_macro}")
 
+pdb.set_trace()
 confus_mtx = confusion_matrix(y_test, y_pred_test, normalize='true')
 plot_confusion_matrix(id2label.values(), confus_mtx, f'Confusion Matrix of {model_name}', f'CM_{model_name}.png')

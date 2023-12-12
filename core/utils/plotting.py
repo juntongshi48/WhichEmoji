@@ -6,7 +6,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-def plot_training_plot(train_losses, val_losses, title, fname):
+def plot_training_plot(train_losses, val_losses, train_accuracies, val_accuracies, title, fname):
     plt.figure()
     n_epochs = len(val_losses)-1
     x_train = np.linspace(0, n_epochs, len(train_losses))
@@ -14,6 +14,8 @@ def plot_training_plot(train_losses, val_losses, title, fname):
 
     plt.plot(x_train, train_losses, label='CE_train')
     plt.plot(x_val, val_losses, label='CE_val')
+    plt.plot(x_val, train_accuracies, label='acc_train')
+    plt.plot(x_val, val_accuracies, label='acc_val')
 
     plt.legend()
     plt.title(title)

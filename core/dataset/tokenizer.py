@@ -24,6 +24,7 @@ class WordBasedTokenizer():
             '<UNK>': 1
         }
         self.id2vocab = None
+        self.above_max = 0
 
     def process(self, sentences, train):
         """ 
@@ -54,6 +55,8 @@ class WordBasedTokenizer():
         # pdb.set_trace()
         encoded_sentences_with_eos = [self.encode_and_pad_sentence(tokenized_sentence) for tokenized_sentence in tokenized_sentences]
         encoded_sentences, eos = zip(*encoded_sentences_with_eos)
+        print(f"The proportion of tweets that got truncateddue to exceeding the maximum lenght of {self.max_sentence_len} is: {100*self.above_max/len(tokenized_sentences)}%")
+        self.above_max = 0
         return list(encoded_sentences), list(eos) 
 
     def encode_and_pad_sentence(self, tokenized_sentence):
@@ -64,6 +67,7 @@ class WordBasedTokenizer():
         ## Padding
         eos = len(embedding)-1
         if len(embedding) > self.max_sentence_len:
+            self.above_max += 1
             embedding = embedding[:self.max_sentence_len]
             eos = self.max_sentence_len - 1
         elif len(embedding) < self.max_sentence_len:

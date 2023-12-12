@@ -136,6 +136,10 @@ from core.utils.plotting import plot_training_plot, plot_confusion_matrix
 #     return train_losses, val_losses, val_accuracies, test_metrics_
 
 def main(cfg):
+    ## Check GPU availability
+    if torch.cuda.is_available():
+        cfg.device = 'cuda'
+        
     id = list(range(len(cfg.data.labels)))
     id2label = dict(zip(id, cfg.data.labels))
 
@@ -190,10 +194,15 @@ def main(cfg):
 
     ## Training
     trainer = myTrainer(model, train_loader, val_loader, test_loader, cfg)
-    train_losses, val_losses, val_accuracies, test_metrics = trainer.train_epochs()
+    train_losses, val_losses, train_accuracies, val_accuracies, test_metrics = trainer.train_epochs()
     
     # Draw Training Plot
-    plot_training_plot(train_losses, val_losses, 'Training_Plot', 'training_plot.png')
+    if not os.path.exists("training_plot"):
+        os.mkdir("training_plot")
+    title = f"training_plot_class_{cfg.num_output_labels}"
+    if cfg.num_output_labels > 1:
+        title = f"training_plot_class_{cfg.num_output_labels}_{cfg.model.threshold}_{cfg.model.pos_weight}"
+    plot_training_plot(train_losses, val_losses, train_accuracies, val_accuracies, title, f'training_plot/{title}.png')
     
     # Select Best epoch
     criterion = val_accuracies
@@ -218,17 +227,19 @@ _{att}\
 _{cfg.data.tokenizer}\
 .png'
     if cfg.num_output_labels == 1:
+        if not os.path.exists("confusion_matrix"):
+            os.mkdir("confusion_matrix")
         plot_confusion_matrix(id2label.values(), test_metrics_best['confusion_matrix'], 'Confusion_Matrix', filename)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--config_file",
-                        type=str,)
+                        type=str)
     parser.add_argument("--batch_size", type=int, default=256)
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--lr", type=float, default=0.0004)
-    parser.add_argument("--device", type=str, default='cuda')
+    parser.add_argument("--device", type=str, default='cpu')
     parser.add_argument("--num_output_labels", type=int, default=1)
     _args = parser.parse_args()
     cfg = Config(**_args.__dict__)

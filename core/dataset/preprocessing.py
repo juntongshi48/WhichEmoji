@@ -32,7 +32,8 @@ class preprocessing:
             '\U0001F60E',  # smiling_face_with_sunglasses
             '\U0001F914',  # thinking_face
         ]
-
+        self.valid = 0
+        self.total = 0
 
 
     def filter_special_characters(self, tweet):
@@ -104,14 +105,15 @@ class preprocessing:
             tokenized_tweet = filtered_tweet.split()
             # Further split words on the slash and flatten the list
             tokenized_tweet = [item for sublist in [word.split('/') for word in tokenized_tweet] for item in sublist]
+            self.total += 1
             if len(tokenized_tweet) >= self.min_sentence_len:
+                self.valid += 1
                 joined_tweets = "\t".join(tokenized_tweet)
                 processed_tweets.append(joined_tweets)
                 labels.append(label_list)
-
         # Split into Train, Test, (Val)
-        x_train, x_test, y_train, y_test = train_test_split(processed_tweets, labels, test_size=self.test_size)
-        x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=self.val_size) 
+        x_train, x_test, y_train, y_test = train_test_split(processed_tweets, labels, test_size=self.test_size, random_state=0)
+        x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=self.val_size, random_state=0) 
         output = [zip(y_train, x_train), zip(y_val, x_val), zip(y_test, x_test)]
         
         # Save to CSV
@@ -142,7 +144,9 @@ class preprocessing:
         for label, raw_path in self.id2label.items():
             raw_path = "core/dataset/data/raw/" + raw_path + ".csv"
             self.process_and_save_to_csv(raw_path, output_dir, label) # set to false to disable multilabel
-    
+        
+        print(f"The proportion of tweets filtered due to insufficient length: {100-self.valid*100/self.total}%")
+
 
         # # Loop over all CSV files in the input directory
         # for csv_file in glob.glob(os.path.join(input_directory, '*.csv')):
@@ -176,7 +180,7 @@ id2label = {0: "enraged_face",
              8: "smiling_face_with_sunglasses", 
              9: "thinking_face"}
 
-preprop = preprocessing(id2label, min_sentence_len=10, multi_class_label=True)
+preprop = preprocessing(id2label, min_sentence_len=10, multi_class_label=False)
 preprop.process_all_csvs_in_directory()
 
 

@@ -57,7 +57,7 @@ class RNNLM(nn.Module):
         self.loss_func = nn.CrossEntropyLoss()
         if self.num_output_labels > 1:
             if cfg.model.loss == "softmax":
-                self.loss_func = SoftMaxLoss()
+                self.loss_func = SoftMaxLoss(cfg.model.pos_weight)
             elif cfg.model.loss == "BCE":
                 self.loss_func = nn.BCEWithLogitsLoss()
             else:

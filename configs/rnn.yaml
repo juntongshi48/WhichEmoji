@@ -11,7 +11,8 @@ model:
   n_layer: 5
   attention: True
   loss: "softmax"     # "softmax", "BCE"
-  threshold: 0.5
+  pos_weight: 2
+  threshold: 2
 data:
   data_dir: "core/dataset/data/processed/"
   tokenizer: "word_based"        # "word_based", "pretrained"
@@ -30,3 +31,6 @@ data:
     - loudly_crying_face
     - smiling_face_with_sunglasses
     - thinking_face
+
+metrics:
+  relaxed: True
