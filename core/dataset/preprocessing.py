@@ -110,8 +110,8 @@ class preprocessing:
                 labels.append(label_list)
 
         # Split into Train, Test, (Val)
-        x_train, x_test, y_train, y_test = train_test_split(processed_tweets, labels, test_size=self.test_size)
-        x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=self.val_size) 
+        x_train, x_test, y_train, y_test = train_test_split(processed_tweets, labels, test_size=self.test_size,random_state=0)
+        x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=self.val_size,random_state=0) 
         output = [zip(y_train, x_train), zip(y_val, x_val), zip(y_test, x_test)]
         
         # Save to CSV
