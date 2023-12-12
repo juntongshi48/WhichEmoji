@@ -6,9 +6,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
-
-import sys
-import os
+import sys, os
 sys.path.append(os.getcwd())
 
 from core.dataset.preprocessing import preprocessing
